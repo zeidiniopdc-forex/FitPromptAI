@@ -1,0 +1,700 @@
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { 
+  AppSettings, 
+  ExerciseLibraryItem, 
+  LoggedExercise, 
+  LoggedSet, 
+  PersonalRecord, 
+  ProgramDayJson, 
+  PromptHistoryItem, 
+  UserProfile, 
+  WorkoutProgramJson, 
+  WorkoutSession 
+} from '../types';
+import { SAMPLE_WORKOUT_PROGRAM } from '../data/sampleProgram';
+import { INITIAL_EXERCISE_LIBRARY } from '../data/exerciseLibrary';
+import { soundService } from '../utils/sound';
+import { getExerciseName, getDayName } from '../utils/exerciseTranslation';
+
+const STORAGE_KEY_PREFIX = 'fitprompt_ai_';
+
+export const DEFAULT_USER_PROFILE: UserProfile = {
+  name: 'علی رضا',
+  age: 27,
+  sex: 'male',
+  height: 180,
+  heightUnit: 'cm',
+  weight: 78,
+  weightUnit: 'kg',
+  measurements: {
+    waistCm: 82,
+    chestCm: 104,
+    armCm: 38,
+    thighCm: 59
+  },
+  primaryGoal: 'Muscle Hypertrophy',
+  secondaryGoal: 'Strength Progression',
+  priorityMuscles: ['Chest', 'Back', 'Shoulders', 'Biceps', 'Triceps', 'Quadriceps'],
+  experienceYears: 2.5,
+  experienceLevel: 'intermediate',
+  currentSessionsPerWeek: 4,
+  avgSessionDurationMinutes: 65,
+  gymExperienceNotes: 'آشنایی با فرم صحیح حرکات چند مفصلی اصلی و اجرای کنترل‌شده',
+  knownPRs: {
+    benchPressKg: 85,
+    squatKg: 105,
+    deadliftKg: 130,
+    overheadPressKg: 52.5
+  },
+  hasInjuries: true,
+  injuryLocations: ['Left Shoulder'],
+  injuryDescription: 'التهاب خفیف در تاندون شانه چپ در زاویه باز بالای سر. از پرس پشت گردن پرهیز شود.',
+  forbiddenExercises: ['Behind the Neck Press', 'Upright Rows with Barbell'],
+  dislikedExercises: ['Pec Deck machine with jerky motion'],
+  preferredExercises: ['Barbell Bench Press', 'Incline DB Press', 'Barbell Squat', 'Lat Pulldown'],
+  cautionExercises: ['Heavy overhead barbell press'],
+  availableEquipment: [
+    'Full Gym', 
+    'Barbell', 
+    'Dumbbell', 
+    'Machine', 
+    'Cable', 
+    'Bench', 
+    'Squat Rack', 
+    'Pull-up Bar'
+  ],
+  customEquipment: [],
+  daysPerWeek: 4,
+  preferredDays: ['Saturday', 'Sunday', 'Tuesday', 'Wednesday'],
+  sessionDurationMinutes: 65,
+  preferredTimeOfDay: 'evening',
+  isScheduleFlexible: false,
+  volumePreference: 'moderate',
+  intensityPreference: 'high',
+  repRangePreference: 'hypertrophy_6_12',
+  defaultRestSeconds: 90,
+  allowSupersets: true,
+  allowDropSets: true,
+  allowRestPause: false,
+  trainingToFailure: 'last_set_only',
+  nutrition: {
+    approximateCalories: 2600,
+    proteinGrams: 160,
+    dietType: 'high_protein',
+    dailyMealsCount: 4,
+    supplements: ['Whey Protein', 'Creatine Monohydrate', 'Omega-3', 'Vitamin D3']
+  }
+};
+
+export const DEFAULT_SETTINGS: AppSettings = {
+  language: 'fa',
+  exerciseNameLanguage: 'fa',
+  weightUnit: 'kg',
+  soundEnabled: true,
+  vibrationEnabled: true,
+  autoStartRestTimer: true,
+  defaultRestSeconds: 90,
+  notifications: {
+    workoutReminder: true,
+    scheduledWorkout: true,
+    restTimerAlert: true,
+    missedWorkout: true,
+    weeklyProgress: true
+  }
+};
+
+interface AppContextType {
+  profile: UserProfile;
+  setProfile: React.Dispatch<React.SetStateAction<UserProfile>>;
+  updateProfile: (updated: Partial<UserProfile>) => void;
+  
+  programs: WorkoutProgramJson[];
+  activeProgramId: string | null;
+  activeProgram: WorkoutProgramJson | null;
+  importProgram: (program: WorkoutProgramJson, activate?: boolean) => void;
+  activateProgram: (programId: string) => void;
+  duplicateProgram: (programId: string) => void;
+  deleteProgram: (programId: string) => void;
+  exportProgramJson: (programId: string) => string;
+  
+  activeSession: WorkoutSession | null;
+  startWorkoutSession: (dayId: string) => void;
+  updateLoggedSet: (exerciseIndex: number, setIndex: number, updatedSet: Partial<LoggedSet>) => void;
+  completeSet: (exerciseIndex: number, setIndex: number) => void;
+  finishWorkoutSession: (notes?: string, rating?: number) => WorkoutSession | null;
+  discardWorkoutSession: () => void;
+  
+  workoutHistory: WorkoutSession[];
+  personalRecords: PersonalRecord[];
+  
+  exerciseLibrary: ExerciseLibraryItem[];
+  addCustomExercise: (item: Omit<ExerciseLibraryItem, 'id' | 'isCustom'>) => void;
+  
+  promptHistory: PromptHistoryItem[];
+  savePromptToHistory: (promptText: string, userSummary: string) => void;
+  
+  settings: AppSettings;
+  updateSettings: (partial: Partial<AppSettings>) => void;
+  
+  onboardingCompleted: boolean;
+  setOnboardingCompleted: (val: boolean) => void;
+
+  restTimerSecondsRemaining: number | null;
+  restTimerTotal: number;
+  isRestTimerActive: boolean;
+  startRestTimer: (seconds?: number) => void;
+  pauseRestTimer: () => void;
+  resumeRestTimer: () => void;
+  adjustRestTimer: (delta: number) => void;
+  skipRestTimer: () => void;
+}
+
+const AppContext = createContext<AppContextType | undefined>(undefined);
+
+export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  // 1. Profile State
+  const [profile, setProfile] = useState<UserProfile>(() => {
+    try {
+      const saved = localStorage.getItem(`${STORAGE_KEY_PREFIX}profile`);
+      return saved ? JSON.parse(saved) : DEFAULT_USER_PROFILE;
+    } catch {
+      return DEFAULT_USER_PROFILE;
+    }
+  });
+
+  // 2. Settings State
+  const [settings, setSettings] = useState<AppSettings>(() => {
+    try {
+      const saved = localStorage.getItem(`${STORAGE_KEY_PREFIX}settings`);
+      return saved ? JSON.parse(saved) : DEFAULT_SETTINGS;
+    } catch {
+      return DEFAULT_SETTINGS;
+    }
+  });
+
+  // 3. Onboarding State
+  const [onboardingCompleted, setOnboardingCompletedState] = useState<boolean>(() => {
+    return localStorage.getItem(`${STORAGE_KEY_PREFIX}onboarding`) === 'true';
+  });
+
+  const setOnboardingCompleted = (val: boolean) => {
+    setOnboardingCompletedState(val);
+    localStorage.setItem(`${STORAGE_KEY_PREFIX}onboarding`, String(val));
+  };
+
+  // 4. Programs List State
+  const [programs, setPrograms] = useState<WorkoutProgramJson[]>(() => {
+    try {
+      const saved = localStorage.getItem(`${STORAGE_KEY_PREFIX}programs`);
+      return saved ? JSON.parse(saved) : [SAMPLE_WORKOUT_PROGRAM];
+    } catch {
+      return [SAMPLE_WORKOUT_PROGRAM];
+    }
+  });
+
+  // 5. Active Program ID
+  const [activeProgramId, setActiveProgramId] = useState<string | null>(() => {
+    const saved = localStorage.getItem(`${STORAGE_KEY_PREFIX}active_program_id`);
+    return saved || SAMPLE_WORKOUT_PROGRAM.program.id;
+  });
+
+  // 6. Active Workout Session
+  const [activeSession, setActiveSession] = useState<WorkoutSession | null>(() => {
+    try {
+      const saved = localStorage.getItem(`${STORAGE_KEY_PREFIX}active_session`);
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  // 7. Workout History
+  const [workoutHistory, setWorkoutHistory] = useState<WorkoutSession[]>(() => {
+    try {
+      const saved = localStorage.getItem(`${STORAGE_KEY_PREFIX}history`);
+      if (saved) return JSON.parse(saved);
+      // Preload 2 realistic previous workouts so dashboard has immediate graphs
+      return [
+        {
+          id: 'hist_sess_01',
+          programId: SAMPLE_WORKOUT_PROGRAM.program.id,
+          programName: SAMPLE_WORKOUT_PROGRAM.program.name,
+          dayId: 'day_upper_a',
+          dayName: 'Upper Body A (Chest & Back Focus)',
+          startTime: new Date(Date.now() - 4 * 86400000).toISOString(),
+          endTime: new Date(Date.now() - 4 * 86400000 + 3600000).toISOString(),
+          durationSeconds: 3480,
+          totalVolumeKg: 7820,
+          totalSets: 20,
+          totalReps: 186,
+          newPRsCount: 1,
+          exercises: [],
+          notes: 'جلسه تمرینی عالی با پمپ عضلانی بالا',
+          rating: 5
+        },
+        {
+          id: 'hist_sess_02',
+          programId: SAMPLE_WORKOUT_PROGRAM.program.id,
+          programName: SAMPLE_WORKOUT_PROGRAM.program.name,
+          dayId: 'day_lower_a',
+          dayName: 'Lower Body A (Quad & Glute Dominant)',
+          startTime: new Date(Date.now() - 2 * 86400000).toISOString(),
+          endTime: new Date(Date.now() - 2 * 86400000 + 3720000).toISOString(),
+          durationSeconds: 3720,
+          totalVolumeKg: 9450,
+          totalSets: 22,
+          totalReps: 210,
+          newPRsCount: 2,
+          exercises: [],
+          notes: 'اسکات و پرس پا با تمرکز عالی بر کشش کنترل شده',
+          rating: 5
+        }
+      ];
+    } catch {
+      return [];
+    }
+  });
+
+  // 8. Personal Records (PRs)
+  const [personalRecords, setPersonalRecords] = useState<PersonalRecord[]>(() => {
+    try {
+      const saved = localStorage.getItem(`${STORAGE_KEY_PREFIX}prs`);
+      if (saved) return JSON.parse(saved);
+      return [
+        {
+          exerciseName: 'Barbell Bench Press',
+          exerciseNameFa: 'پرس سینه هالتر',
+          metric: 'max_weight',
+          value: 85,
+          unit: 'kg',
+          date: '2026-09-15',
+          workoutSessionId: 'hist_sess_01'
+        },
+        {
+          exerciseName: 'Barbell Back Squat',
+          exerciseNameFa: 'اسکات هالتر از پشت',
+          metric: 'max_weight',
+          value: 105,
+          unit: 'kg',
+          date: '2026-09-17',
+          workoutSessionId: 'hist_sess_02'
+        }
+      ];
+    } catch {
+      return [];
+    }
+  });
+
+  // 9. Custom Exercises & Library
+  const [customExercises, setCustomExercises] = useState<ExerciseLibraryItem[]>(() => {
+    try {
+      const saved = localStorage.getItem(`${STORAGE_KEY_PREFIX}custom_exercises`);
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  // 10. Prompt History
+  const [promptHistory, setPromptHistory] = useState<PromptHistoryItem[]>(() => {
+    try {
+      const saved = localStorage.getItem(`${STORAGE_KEY_PREFIX}prompt_history`);
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  // 11. Rest Timer State
+  const [restTimerSecondsRemaining, setRestTimerSecondsRemaining] = useState<number | null>(null);
+  const [restTimerTotal, setRestTimerTotal] = useState<number>(90);
+  const [isRestTimerActive, setIsRestTimerActive] = useState<boolean>(false);
+
+  // Sync to LocalStorage
+  useEffect(() => {
+    localStorage.setItem(`${STORAGE_KEY_PREFIX}profile`, JSON.stringify(profile));
+  }, [profile]);
+
+  useEffect(() => {
+    localStorage.setItem(`${STORAGE_KEY_PREFIX}settings`, JSON.stringify(settings));
+    // Apply HTML direction and lang
+    document.documentElement.lang = settings.language;
+    document.documentElement.dir = settings.language === 'fa' ? 'rtl' : 'ltr';
+  }, [settings]);
+
+  useEffect(() => {
+    localStorage.setItem(`${STORAGE_KEY_PREFIX}programs`, JSON.stringify(programs));
+  }, [programs]);
+
+  useEffect(() => {
+    if (activeProgramId) {
+      localStorage.setItem(`${STORAGE_KEY_PREFIX}active_program_id`, activeProgramId);
+    }
+  }, [activeProgramId]);
+
+  useEffect(() => {
+    localStorage.setItem(`${STORAGE_KEY_PREFIX}history`, JSON.stringify(workoutHistory));
+  }, [workoutHistory]);
+
+  useEffect(() => {
+    localStorage.setItem(`${STORAGE_KEY_PREFIX}prs`, JSON.stringify(personalRecords));
+  }, [personalRecords]);
+
+  useEffect(() => {
+    localStorage.setItem(`${STORAGE_KEY_PREFIX}custom_exercises`, JSON.stringify(customExercises));
+  }, [customExercises]);
+
+  useEffect(() => {
+    localStorage.setItem(`${STORAGE_KEY_PREFIX}prompt_history`, JSON.stringify(promptHistory));
+  }, [promptHistory]);
+
+  useEffect(() => {
+    if (activeSession) {
+      localStorage.setItem(`${STORAGE_KEY_PREFIX}active_session`, JSON.stringify(activeSession));
+    } else {
+      localStorage.removeItem(`${STORAGE_KEY_PREFIX}active_session`);
+    }
+  }, [activeSession]);
+
+  // Rest Timer Interval
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null;
+    if (isRestTimerActive && restTimerSecondsRemaining !== null && restTimerSecondsRemaining > 0) {
+      interval = setInterval(() => {
+        setRestTimerSecondsRemaining((prev) => {
+          if (prev === null || prev <= 1) {
+            setIsRestTimerActive(false);
+            if (settings.soundEnabled) soundService.playRestFinished();
+            if (settings.vibrationEnabled && 'vibrate' in navigator) {
+              navigator.vibrate([200, 100, 200]);
+            }
+            return 0;
+          }
+          if (prev <= 4 && prev > 1 && settings.soundEnabled) {
+            soundService.playTimerTick();
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isRestTimerActive, restTimerSecondsRemaining, settings.soundEnabled, settings.vibrationEnabled]);
+
+  const updateProfile = (updated: Partial<UserProfile>) => {
+    setProfile((prev) => ({ ...prev, ...updated }));
+  };
+
+  const activeProgram = programs.find((p) => p.program.id === activeProgramId) || programs[0] || null;
+
+  const importProgram = (program: WorkoutProgramJson, activate = true) => {
+    setPrograms((prev) => {
+      // If already exists with same id, replace it; else append
+      const filtered = prev.filter((p) => p.program.id !== program.program.id);
+      return [program, ...filtered];
+    });
+    if (activate) {
+      setActiveProgramId(program.program.id);
+    }
+  };
+
+  const activateProgram = (programId: string) => {
+    setActiveProgramId(programId);
+  };
+
+  const duplicateProgram = (programId: string) => {
+    const target = programs.find((p) => p.program.id === programId);
+    if (!target) return;
+    const newId = `prog_${Date.now()}`;
+    const duplicated: WorkoutProgramJson = {
+      ...target,
+      program: {
+        ...target.program,
+        id: newId,
+        name: `${target.program.name} (کپی)`,
+        created_at: new Date().toISOString().split('T')[0]
+      }
+    };
+    setPrograms((prev) => [duplicated, ...prev]);
+  };
+
+  const deleteProgram = (programId: string) => {
+    setPrograms((prev) => {
+      const remaining = prev.filter((p) => p.program.id !== programId);
+      if (activeProgramId === programId && remaining.length > 0) {
+        setActiveProgramId(remaining[0].program.id);
+      }
+      return remaining;
+    });
+  };
+
+  const exportProgramJson = (programId: string): string => {
+    const p = programs.find((item) => item.program.id === programId);
+    return p ? JSON.stringify(p, null, 2) : '';
+  };
+
+  // Workout Tracker Operations
+  const startWorkoutSession = (dayId: string) => {
+    if (!activeProgram) return;
+    const day = activeProgram.days.find((d) => d.day_id === dayId) || activeProgram.days[0];
+    if (!day) return;
+
+    const loggedExercises: LoggedExercise[] = day.exercises.map((ex) => {
+      const targetRepsStr = typeof ex.reps === 'number' 
+        ? String(ex.reps) 
+        : `${ex.reps.min}-${ex.reps.max}`;
+      
+      const sets: LoggedSet[] = Array.from({ length: ex.sets }).map((_, idx) => ({
+        setNumber: idx + 1,
+        targetReps: targetRepsStr,
+        targetWeightKg: ex.target_weight || null,
+        targetRir: ex.rir || null,
+        actualWeightKg: ex.target_weight || 0,
+        actualReps: typeof ex.reps === 'number' ? ex.reps : ex.reps.min,
+        actualRir: ex.rir ?? 2,
+        actualRpe: ex.rpe ?? 8,
+        isCompleted: false,
+        isWarmup: idx === 0 && Boolean(ex.warmup),
+        isDropSet: ex.drop_set && idx === ex.sets - 1,
+        notes: ''
+      }));
+
+      const nameFa = ex.name_fa || getExerciseName(ex.name, 'fa', { exerciseId: ex.exercise_id });
+      return {
+        exerciseId: ex.exercise_id,
+        name: ex.name,
+        nameFa,
+        muscleGroup: typeof ex.muscle_group === 'string' ? ex.muscle_group : 'Full Body',
+        sets,
+        notes: ex.notes || '',
+        isCompleted: false
+      };
+    });
+
+    const newSession: WorkoutSession = {
+      id: `sess_${Date.now()}`,
+      programId: activeProgram.program.id,
+      programName: activeProgram.program.name,
+      dayId: day.day_id,
+      dayName: day.name,
+      startTime: new Date().toISOString(),
+      durationSeconds: 0,
+      exercises: loggedExercises,
+      totalVolumeKg: 0,
+      totalSets: 0,
+      totalReps: 0,
+      newPRsCount: 0
+    };
+
+    setActiveSession(newSession);
+  };
+
+  const updateLoggedSet = (exerciseIndex: number, setIndex: number, updatedSet: Partial<LoggedSet>) => {
+    if (!activeSession) return;
+    setActiveSession((prev) => {
+      if (!prev) return null;
+      const exercises = [...prev.exercises];
+      const ex = { ...exercises[exerciseIndex] };
+      const sets = [...ex.sets];
+      sets[setIndex] = { ...sets[setIndex], ...updatedSet };
+      ex.sets = sets;
+      exercises[exerciseIndex] = ex;
+      return { ...prev, exercises };
+    });
+  };
+
+  const startRestTimer = (seconds?: number) => {
+    const dur = seconds || settings.defaultRestSeconds;
+    setRestTimerTotal(dur);
+    setRestTimerSecondsRemaining(dur);
+    setIsRestTimerActive(true);
+  };
+
+  const pauseRestTimer = () => setIsRestTimerActive(false);
+  const resumeRestTimer = () => {
+    if (restTimerSecondsRemaining && restTimerSecondsRemaining > 0) {
+      setIsRestTimerActive(true);
+    }
+  };
+  const adjustRestTimer = (delta: number) => {
+    setRestTimerSecondsRemaining((prev) => {
+      const current = prev ?? 0;
+      const next = Math.max(0, current + delta);
+      return next;
+    });
+  };
+  const skipRestTimer = () => {
+    setIsRestTimerActive(false);
+    setRestTimerSecondsRemaining(null);
+  };
+
+  const completeSet = (exerciseIndex: number, setIndex: number) => {
+    if (!activeSession) return;
+    const currentSet = activeSession.exercises[exerciseIndex]?.sets[setIndex];
+    if (!currentSet) return;
+
+    const willBeCompleted = !currentSet.isCompleted;
+    updateLoggedSet(exerciseIndex, setIndex, { isCompleted: willBeCompleted });
+
+    if (willBeCompleted) {
+      if (settings.soundEnabled) soundService.playSetComplete();
+      if (settings.autoStartRestTimer) {
+        // Look up exercise rest seconds or use default
+        startRestTimer(settings.defaultRestSeconds);
+      }
+    }
+  };
+
+  const finishWorkoutSession = (notes?: string, rating?: number): WorkoutSession | null => {
+    if (!activeSession) return null;
+
+    let totalVolume = 0;
+    let totalSets = 0;
+    let totalReps = 0;
+    const detectedPRs: PersonalRecord[] = [];
+
+    activeSession.exercises.forEach((ex) => {
+      ex.sets.forEach((set) => {
+        if (set.isCompleted) {
+          totalSets += 1;
+          totalReps += set.actualReps;
+          const weight = set.actualWeightKg || 0;
+          totalVolume += weight * set.actualReps;
+
+          // PR check: weight PR
+          const existingMaxWeight = personalRecords.find(
+            (pr) => pr.exerciseName.toLowerCase() === ex.name.toLowerCase() && pr.metric === 'max_weight'
+          );
+
+          if (weight > 0 && (!existingMaxWeight || weight > existingMaxWeight.value)) {
+            const exerciseFa = ex.nameFa || getExerciseName(ex.name, 'fa', { exerciseId: ex.exerciseId });
+            detectedPRs.push({
+              exerciseName: ex.name,
+              exerciseNameFa: exerciseFa,
+              metric: 'max_weight',
+              value: weight,
+              unit: 'kg',
+              date: new Date().toISOString().split('T')[0],
+              previousValue: existingMaxWeight?.value,
+              workoutSessionId: activeSession.id
+            });
+          }
+        }
+      });
+    });
+
+    const endTime = new Date().toISOString();
+    const durationSec = Math.max(
+      60,
+      Math.round((new Date(endTime).getTime() - new Date(activeSession.startTime).getTime()) / 1000)
+    );
+
+    const completedSession: WorkoutSession = {
+      ...activeSession,
+      endTime,
+      durationSeconds: durationSec,
+      totalVolumeKg: Math.round(totalVolume),
+      totalSets,
+      totalReps,
+      newPRsCount: detectedPRs.length,
+      personalRecords: detectedPRs,
+      notes: notes || activeSession.notes || '',
+      rating: rating || 5
+    };
+
+    if (detectedPRs.length > 0) {
+      if (settings.soundEnabled) soundService.playPRFanfare();
+      setPersonalRecords((prev) => [...detectedPRs, ...prev]);
+    }
+
+    setWorkoutHistory((prev) => [completedSession, ...prev]);
+    setActiveSession(null);
+    skipRestTimer();
+
+    return completedSession;
+  };
+
+  const discardWorkoutSession = () => {
+    setActiveSession(null);
+    skipRestTimer();
+  };
+
+  const addCustomExercise = (item: Omit<ExerciseLibraryItem, 'id' | 'isCustom'>) => {
+    const newItem: ExerciseLibraryItem = {
+      ...item,
+      id: `custom_ex_${Date.now()}`,
+      isCustom: true
+    };
+    setCustomExercises((prev) => [newItem, ...prev]);
+  };
+
+  const savePromptToHistory = (promptText: string, userSummary: string) => {
+    const newItem: PromptHistoryItem = {
+      id: `prompt_${Date.now()}`,
+      createdAt: new Date().toLocaleString(),
+      promptText,
+      version: '1.0',
+      userSummary
+    };
+    setPromptHistory((prev) => [newItem, ...prev]);
+  };
+
+  const updateSettings = (partial: Partial<AppSettings>) => {
+    setSettings((prev) => ({ ...prev, ...partial }));
+  };
+
+  const exerciseLibrary = [...INITIAL_EXERCISE_LIBRARY, ...customExercises];
+
+  return (
+    <AppContext.Provider
+      value={{
+        profile,
+        setProfile,
+        updateProfile,
+        programs,
+        activeProgramId,
+        activeProgram,
+        importProgram,
+        activateProgram,
+        duplicateProgram,
+        deleteProgram,
+        exportProgramJson,
+        activeSession,
+        startWorkoutSession,
+        updateLoggedSet,
+        completeSet,
+        finishWorkoutSession,
+        discardWorkoutSession,
+        workoutHistory,
+        personalRecords,
+        exerciseLibrary,
+        addCustomExercise,
+        promptHistory,
+        savePromptToHistory,
+        settings,
+        updateSettings,
+        onboardingCompleted,
+        setOnboardingCompleted,
+        restTimerSecondsRemaining,
+        restTimerTotal,
+        isRestTimerActive,
+        startRestTimer,
+        pauseRestTimer,
+        resumeRestTimer,
+        adjustRestTimer,
+        skipRestTimer
+      }}
+    >
+      {children}
+    </AppContext.Provider>
+  );
+};
+
+export const useApp = () => {
+  const context = useContext(AppContext);
+  if (!context) {
+    throw new Error('useApp must be used within an AppProvider');
+  }
+  return context;
+};

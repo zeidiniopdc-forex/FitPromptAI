@@ -1,0 +1,6 @@
+{
+  "name": "FitPrompt AI - Workout Tracker",
+  "description": "AI-agnostic workout program prompt generator, strict JSON validator, and professional workout tracker with progress analytics.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
