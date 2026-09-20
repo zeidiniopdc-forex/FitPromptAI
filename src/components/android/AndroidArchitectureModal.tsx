@@ -64,12 +64,11 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: 'npm'
+          node-version: 22
 
       - name: Install dependencies & build
         run: |
-          npm install
+          npm install --legacy-peer-deps
           npm run build
           npx cap sync android
 
