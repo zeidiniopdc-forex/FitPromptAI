@@ -72,11 +72,11 @@ jobs:
           npm run build
           npx cap sync android
 
-      - name: Set up Java JDK 17
-        uses: actions/setup-java@v4
+      - name: Set up Java JDK 21
+        uses: actions/setup-java@v5
         with:
           distribution: 'zulu'
-          java-version: '17'
+          java-version: '21'
           cache: 'gradle'
 
       - name: Grant execute permission
