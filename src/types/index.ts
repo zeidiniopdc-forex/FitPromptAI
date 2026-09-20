@@ -48,11 +48,11 @@ export interface BodyMeasurements {
 
 export interface UserProfile {
   name: string;
-  age: number;
+  age?: number;
   sex: Sex;
-  height: number;
+  height?: number;
   heightUnit: HeightUnit;
-  weight: number;
+  weight?: number;
   weightUnit: WeightUnit;
   measurements: BodyMeasurements;
   

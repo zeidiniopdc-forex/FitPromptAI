@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useApp } from '../../context/AppContext';
+import { useApp, DEFAULT_USER_PROFILE } from '../../context/AppContext';
 import { t } from '../../utils/translations';
 import { MuscleGroup, UserProfile } from '../../types';
 import { 
@@ -50,47 +50,7 @@ export const ProfileAssessment: React.FC<ProfileAssessmentProps> = ({
       : 'Are you sure you want to reset all data and history back to a completely clean state?';
     if (window.confirm(msg)) {
       resetAllData();
-      setFormData({
-        name: '',
-        age: undefined,
-        sex: 'male',
-        height: undefined,
-        heightUnit: 'cm',
-        weight: undefined,
-        weightUnit: 'kg',
-        measurements: {},
-        primaryGoal: 'Muscle Hypertrophy',
-        priorityMuscles: ['Chest', 'Back', 'Shoulders', 'Quadriceps', 'Hamstrings', 'Biceps', 'Triceps'],
-        experienceYears: 1,
-        experienceLevel: 'intermediate',
-        currentSessionsPerWeek: 4,
-        avgSessionDurationMinutes: 60,
-        gymExperienceNotes: '',
-        knownPRs: {},
-        hasInjuries: false,
-        injuryLocations: [],
-        injuryNotes: '',
-        hasChronicConditions: false,
-        chronicConditionNotes: '',
-        forbiddenExercises: [],
-        cautionExercises: [],
-        preferredExercises: [],
-        availableEquipment: ['Full Gym', 'Barbell', 'Dumbbell', 'Machine', 'Cable', 'Bench', 'Squat Rack'],
-        customEquipment: [],
-        daysPerWeek: 4,
-        preferredDays: ['Saturday', 'Sunday', 'Tuesday', 'Wednesday'],
-        sessionDurationMinutes: 60,
-        preferredTrainingSplit: 'Upper / Lower',
-        cardioPreference: 'post_workout',
-        cardioMinutesPerWeek: 45,
-        periodizationPreference: 'linear',
-        preferredRepsRange: 'hypertrophy_6_12',
-        warmupPreferences: { dynamicStretch: true, cardioMinutes: 5 },
-        cooldownPreferences: { staticStretch: true, foamRolling: false },
-        rpeTracking: true,
-        restTimerPreferenceSeconds: 90,
-        nutrition: { dietType: 'standard', dailyMealsCount: 4 }
-      });
+      setFormData({ ...DEFAULT_USER_PROFILE });
       setResetSuccess(true);
       setTimeout(() => setResetSuccess(false), 2500);
     }
