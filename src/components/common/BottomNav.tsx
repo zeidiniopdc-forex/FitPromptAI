@@ -33,7 +33,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ currentTab, onSelectTab })
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-zinc-950/95 backdrop-blur-lg border-t border-zinc-800/80 px-2 py-1.5 safe-area-pb transition-all">
+    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-zinc-950/95 dark:bg-zinc-950/95 light:bg-white/95 backdrop-blur-lg border-t border-zinc-800/80 dark:border-zinc-800/80 light:border-zinc-200 px-2 py-1.5 safe-area-pb transition-all">
       <div className="max-w-md mx-auto flex items-center justify-around gap-1">
         {tabs.map((tab) => {
           const Icon = tab.icon;
@@ -46,8 +46,8 @@ export const BottomNav: React.FC<BottomNavProps> = ({ currentTab, onSelectTab })
               onClick={() => onSelectTab(tab.id)}
               className={`relative flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition-all duration-150 min-w-[54px] ${
                 isActive
-                  ? 'text-emerald-400 font-semibold'
-                  : 'text-zinc-400 hover:text-zinc-200'
+                  ? 'text-emerald-500 font-semibold'
+                  : 'text-zinc-400 dark:text-zinc-400 light:text-zinc-500 hover:text-zinc-200 dark:hover:text-zinc-200 light:hover:text-zinc-900'
               }`}
             >
               {/* Active Pill Indicator */}

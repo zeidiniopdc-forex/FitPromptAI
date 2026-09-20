@@ -2,6 +2,7 @@ import React from 'react';
 import { useApp } from '../../context/AppContext';
 import { t } from '../../utils/translations';
 import { getDayName, getMuscleGroupName } from '../../utils/exerciseTranslation';
+import { matchWorkoutDayForDate, getCurrentDayOfWeek } from '../../utils/weekday';
 import { 
   Play, 
   Flame, 
@@ -38,16 +39,24 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
   const lang = settings.language;
   const labels = t[lang];
 
-  // Determine today's workout day from active program
+  // Intelligently detect today's day of week & match dedicated workout session
   const currentDays = activeProgram?.days || [];
-  const todayDay = currentDays[0] || null;
-  const nextDay = currentDays[1] || currentDays[0] || null;
+  const { todayDay, isExplicitMatch, currentDayInfo } = matchWorkoutDayForDate(
+    currentDays,
+    profile.preferredDays
+  );
 
-  // Streak calculation (sample realistic streak)
-  const streakDays = workoutHistory.length > 0 ? 3 : 0;
-  const weeklyTarget = profile.daysPerWeek || 4;
+  // Find next day in sequence
+  const todayIndex = todayDay ? currentDays.findIndex((d) => d.day_id === todayDay.day_id) : -1;
+  const nextDay = (todayIndex !== -1 && currentDays.length > 1)
+    ? currentDays[(todayIndex + 1) % currentDays.length]
+    : (currentDays[1] || currentDays[0] || null);
+
+  // Dynamic calculation based strictly on real user data (clean state)
+  const streakDays = workoutHistory.length > 0 ? workoutHistory.length : 0;
+  const weeklyTarget = profile.daysPerWeek || (activeProgram?.program.days_per_week) || 4;
   const completedThisWeek = Math.min(weeklyTarget, workoutHistory.length);
-  const totalVolumeKg = workoutHistory.reduce((a, b) => a + b.totalVolumeKg, 0);
+  const totalVolumeKg = workoutHistory.reduce((a, b) => a + (b.totalVolumeKg || 0), 0);
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6 pb-28 space-y-6">
@@ -92,10 +101,17 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
 
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <span className="px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider bg-emerald-500 text-zinc-950 shadow-md">
-                {labels.todayWorkoutTitle}
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider bg-emerald-500 text-zinc-950 shadow-md flex items-center gap-1">
+                <Calendar className="w-3 h-3 inline-block" />
+                <span>{lang === 'fa' ? currentDayInfo.nameFa : currentDayInfo.nameEn}</span>
+                <span className="opacity-75 font-normal">• {labels.todayWorkoutTitle}</span>
               </span>
+              {isExplicitMatch && (
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-500/20 text-teal-300 border border-teal-500/30">
+                  {lang === 'fa' ? 'جلسه اختصاصی امروز' : 'Scheduled Today'}
+                </span>
+              )}
               {activeSession ? (
                 <span className="text-xs font-bold text-amber-400 flex items-center gap-1 animate-pulse">
                   ● {lang === 'fa' ? 'جلسه در حال اجرا' : 'In Progress'}
@@ -281,25 +297,35 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
           </div>
 
           <div className="space-y-2">
-            {workoutHistory.slice(0, 2).map((h) => (
-              <div
-                key={h.id}
-                className="p-3 rounded-2xl bg-zinc-950 border border-zinc-800/80 flex items-center justify-between text-xs"
-              >
-                <div>
-                  <span className="font-bold text-white block line-clamp-1">{getDayName(h.dayName, lang)}</span>
-                  <span className="text-[10px] text-zinc-500">
-                    {h.totalVolumeKg.toLocaleString()} {labels.kgUnit} • {h.totalSets} {lang === 'fa' ? 'ست' : 'sets'}
-                  </span>
-                </div>
-                <div className="text-right">
-                  <span className="text-[10px] text-zinc-400 block">{h.startTime.split('T')[0]}</span>
-                  <span className="text-emerald-400 font-bold text-[10px]">
-                    ★ {h.rating || 5}
-                  </span>
-                </div>
+            {workoutHistory.length === 0 ? (
+              <div className="py-6 text-center text-zinc-500 text-xs">
+                <Dumbbell className="w-6 h-6 mx-auto mb-2 text-zinc-600 opacity-60" />
+                <p>{lang === 'fa' ? 'هنوز جلسه‌ای ثبت نشده است' : 'No workout recorded yet'}</p>
+                <p className="text-[10px] text-zinc-600 mt-0.5">
+                  {lang === 'fa' ? 'با شروع اولین تمرین، آمار و پیشرفت شما اینجا ثبت می‌شود' : 'Start your first workout to track analytics'}
+                </p>
               </div>
-            ))}
+            ) : (
+              workoutHistory.slice(0, 2).map((h) => (
+                <div
+                  key={h.id}
+                  className="p-3 rounded-2xl bg-zinc-950 border border-zinc-800/80 flex items-center justify-between text-xs"
+                >
+                  <div>
+                    <span className="font-bold text-white block line-clamp-1">{getDayName(h.dayName, lang)}</span>
+                    <span className="text-[10px] text-zinc-500">
+                      {h.totalVolumeKg.toLocaleString()} {labels.kgUnit} • {h.totalSets} {lang === 'fa' ? 'ست' : 'sets'}
+                    </span>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-[10px] text-zinc-400 block">{h.startTime.split('T')[0]}</span>
+                    <span className="text-emerald-400 font-bold text-[10px]">
+                      ★ {h.rating || 5}
+                    </span>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
 
           <button

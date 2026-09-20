@@ -18,7 +18,8 @@ import {
   GripVertical,
   Plus,
   Trash2,
-  Sparkles
+  Sparkles,
+  RotateCcw
 } from 'lucide-react';
 
 interface ProfileAssessmentProps {
@@ -30,17 +31,70 @@ export const ProfileAssessment: React.FC<ProfileAssessmentProps> = ({
   onSaved,
   onNavigateToPrompt
 }) => {
-  const { profile, updateProfile, settings } = useApp();
+  const { profile, updateProfile, resetAllData, settings } = useApp();
   const lang = settings.language;
   const labels = t[lang];
 
   const [activeStep, setActiveStep] = useState<number>(0);
   const [formData, setFormData] = useState<UserProfile>(profile);
   const [savedSuccess, setSavedSuccess] = useState(false);
+  const [resetSuccess, setResetSuccess] = useState(false);
   const [newForbiddenEx, setNewForbiddenEx] = useState('');
   const [newPreferredEx, setNewPreferredEx] = useState('');
   const [newCautionEx, setNewCautionEx] = useState('');
   const [newCustomEquip, setNewCustomEquip] = useState('');
+
+  const handleReset = () => {
+    const msg = lang === 'fa' 
+      ? 'آیا مطمئن هستید که می‌خواهید تمام داده‌های کاربر و تاریخچه‌ها را پاک کرده و برنامه را کاملاً خام (صفر) کنید؟'
+      : 'Are you sure you want to reset all data and history back to a completely clean state?';
+    if (window.confirm(msg)) {
+      resetAllData();
+      setFormData({
+        name: '',
+        age: undefined,
+        sex: 'male',
+        height: undefined,
+        heightUnit: 'cm',
+        weight: undefined,
+        weightUnit: 'kg',
+        measurements: {},
+        primaryGoal: 'Muscle Hypertrophy',
+        priorityMuscles: ['Chest', 'Back', 'Shoulders', 'Quadriceps', 'Hamstrings', 'Biceps', 'Triceps'],
+        experienceYears: 1,
+        experienceLevel: 'intermediate',
+        currentSessionsPerWeek: 4,
+        avgSessionDurationMinutes: 60,
+        gymExperienceNotes: '',
+        knownPRs: {},
+        hasInjuries: false,
+        injuryLocations: [],
+        injuryNotes: '',
+        hasChronicConditions: false,
+        chronicConditionNotes: '',
+        forbiddenExercises: [],
+        cautionExercises: [],
+        preferredExercises: [],
+        availableEquipment: ['Full Gym', 'Barbell', 'Dumbbell', 'Machine', 'Cable', 'Bench', 'Squat Rack'],
+        customEquipment: [],
+        daysPerWeek: 4,
+        preferredDays: ['Saturday', 'Sunday', 'Tuesday', 'Wednesday'],
+        sessionDurationMinutes: 60,
+        preferredTrainingSplit: 'Upper / Lower',
+        cardioPreference: 'post_workout',
+        cardioMinutesPerWeek: 45,
+        periodizationPreference: 'linear',
+        preferredRepsRange: 'hypertrophy_6_12',
+        warmupPreferences: { dynamicStretch: true, cardioMinutes: 5 },
+        cooldownPreferences: { staticStretch: true, foamRolling: false },
+        rpeTracking: true,
+        restTimerPreferenceSeconds: 90,
+        nutrition: { dietType: 'standard', dailyMealsCount: 4 }
+      });
+      setResetSuccess(true);
+      setTimeout(() => setResetSuccess(false), 2500);
+    }
+  };
 
   const steps = [
     { id: 'basic', label: labels.stepBasic, icon: User },
@@ -116,7 +170,18 @@ export const ProfileAssessment: React.FC<ProfileAssessmentProps> = ({
           </p>
         </div>
 
-        <div className="flex items-center gap-2 self-end sm:self-auto">
+        <div className="flex items-center gap-2 self-end sm:self-auto flex-wrap">
+          <button
+            type="button"
+            id="btn-reset-clean-state"
+            onClick={handleReset}
+            title={lang === 'fa' ? 'پاکسازی و بازگشت به حالت کاملاً خام' : 'Reset to clean state'}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 transition-all"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            <span>{resetSuccess ? (lang === 'fa' ? 'خام شد!' : 'Cleaned!') : (lang === 'fa' ? 'حالت خام' : 'Reset to Raw')}</span>
+          </button>
+
           {onNavigateToPrompt && (
             <button
               onClick={onNavigateToPrompt}

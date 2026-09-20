@@ -13,6 +13,45 @@
   [dir="ltr"] {
     font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
   }
+
+  /* Light mode global overrides */
+  html.light body {
+    background-color: #f8fafc;
+    color: #0f172a;
+  }
+
+  html.light .bg-zinc-950 {
+    background-color: #f8fafc !important;
+  }
+
+  html.light .bg-zinc-900 {
+    background-color: #ffffff !important;
+    border-color: #e2e8f0 !important;
+  }
+
+  html.light .border-zinc-800 {
+    border-color: #e2e8f0 !important;
+  }
+
+  html.light .text-white {
+    color: #0f172a !important;
+  }
+
+  html.light .text-zinc-400 {
+    color: #64748b !important;
+  }
+
+  html.light .text-zinc-300 {
+    color: #334155 !important;
+  }
+
+  html.light .text-zinc-200 {
+    color: #1e293b !important;
+  }
+
+  html.light .bg-zinc-800 {
+    background-color: #f1f5f9 !important;
+  }
 }
 
 /* Custom smooth scrollbar */

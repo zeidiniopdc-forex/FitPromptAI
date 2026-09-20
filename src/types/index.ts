@@ -283,7 +283,10 @@ export interface PromptHistoryItem {
   userSummary: string;
 }
 
+export type ThemeMode = 'dark' | 'light';
+
 export interface AppSettings {
+  theme: ThemeMode;
   language: Language;
   exerciseNameLanguage: 'en' | 'fa' | 'both';
   weightUnit: WeightUnit;

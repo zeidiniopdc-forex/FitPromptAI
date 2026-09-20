@@ -40,7 +40,7 @@ const MainLayout: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col font-sans selection:bg-emerald-500/30">
+    <div className="min-h-screen bg-zinc-950 dark:bg-zinc-950 light:bg-zinc-50 text-zinc-100 dark:text-zinc-100 light:text-zinc-900 flex flex-col font-sans selection:bg-emerald-500/30 transition-colors duration-200">
       {/* Top Android Material 3 App Bar */}
       <Header
         onOpenAndroidCode={() => setShowAndroidCodeModal(true)}

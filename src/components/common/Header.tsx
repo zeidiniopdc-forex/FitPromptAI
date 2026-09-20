@@ -9,7 +9,9 @@ import {
   Bell, 
   Code2, 
   CheckCircle2,
-  Share2
+  Share2,
+  Sun,
+  Moon
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -21,11 +23,17 @@ export const Header: React.FC<HeaderProps> = ({ onOpenAndroidCode, onOpenImport 
   const { settings, updateSettings, activeSession } = useApp();
   const lang = settings.language;
   const labels = t[lang];
+  const isLight = settings.theme === 'light';
   const [notificationToast, setNotificationToast] = useState<string | null>(null);
 
   const toggleLanguage = () => {
     const nextLang = settings.language === 'fa' ? 'en' : 'fa';
     updateSettings({ language: nextLang });
+  };
+
+  const toggleTheme = () => {
+    const nextTheme = settings.theme === 'light' ? 'dark' : 'light';
+    updateSettings({ theme: nextTheme });
   };
 
   const toggleSound = () => {
@@ -41,7 +49,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenAndroidCode, onOpenImport 
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-zinc-950/85 backdrop-blur-md border-b border-zinc-800/80 px-4 py-3 transition-colors">
+    <header className="sticky top-0 z-40 bg-zinc-950/85 dark:bg-zinc-950/85 light:bg-white/90 backdrop-blur-md border-b border-zinc-800/80 dark:border-zinc-800/80 light:border-zinc-200 px-4 py-3 transition-colors">
       <div className="max-w-5xl mx-auto flex items-center justify-between gap-2">
         {/* Left / Start: Logo and Status */}
         <div className="flex items-center gap-2.5">
@@ -50,7 +58,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenAndroidCode, onOpenImport 
           </div>
           <div>
             <div className="flex items-center gap-1.5">
-              <h1 className="text-base font-extrabold tracking-tight text-white flex items-center gap-1">
+              <h1 className="text-base font-extrabold tracking-tight text-white dark:text-white light:text-zinc-900 flex items-center gap-1">
                 {labels.appName}
               </h1>
               {activeSession && (
@@ -60,7 +68,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenAndroidCode, onOpenImport 
                 </span>
               )}
             </div>
-            <p className="text-[11px] text-zinc-400 hidden sm:block">
+            <p className="text-[11px] text-zinc-400 dark:text-zinc-400 light:text-zinc-600 hidden sm:block">
               {labels.appTagline}
             </p>
           </div>
@@ -68,12 +76,26 @@ export const Header: React.FC<HeaderProps> = ({ onOpenAndroidCode, onOpenImport 
 
         {/* Right / End: Quick Actions & Toggles */}
         <div className="flex items-center gap-1.5 sm:gap-2">
+          {/* Theme Toggle (Light / Dark) */}
+          <button
+            id="btn-header-theme"
+            onClick={toggleTheme}
+            title={isLight ? (lang === 'fa' ? 'تغییر به تم تاریک' : 'Switch to Dark Mode') : (lang === 'fa' ? 'تغییر به تم روشن' : 'Switch to Light Mode')}
+            className="p-2 rounded-lg text-zinc-400 dark:text-zinc-400 light:text-zinc-600 hover:text-white dark:hover:text-white light:hover:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-800 light:hover:bg-zinc-100 transition-colors"
+          >
+            {isLight ? (
+              <Moon className="w-4 h-4 text-amber-500" />
+            ) : (
+              <Sun className="w-4 h-4 text-amber-400" />
+            )}
+          </button>
+
           {/* Notification Simulator */}
           <button
             id="btn-header-notification"
             onClick={simulateNotification}
             title={lang === 'fa' ? 'تست نوتیفیکیشن یادآوری تمرین' : 'Test Reminder Notification'}
-            className="p-2 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors relative"
+            className="p-2 rounded-lg text-zinc-400 dark:text-zinc-400 light:text-zinc-600 hover:text-white dark:hover:text-white light:hover:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-800 light:hover:bg-zinc-100 transition-colors relative"
           >
             <Bell className="w-4 h-4" />
             <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-emerald-500"></span>
@@ -84,7 +106,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenAndroidCode, onOpenImport 
             id="btn-header-sound"
             onClick={toggleSound}
             title={settings.soundEnabled ? 'Disable Sound' : 'Enable Sound'}
-            className="p-2 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
+            className="p-2 rounded-lg text-zinc-400 dark:text-zinc-400 light:text-zinc-600 hover:text-white dark:hover:text-white light:hover:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-800 light:hover:bg-zinc-100 transition-colors"
           >
             {settings.soundEnabled ? (
               <Volume2 className="w-4 h-4 text-emerald-400" />
@@ -97,7 +119,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenAndroidCode, onOpenImport 
           <button
             id="btn-header-language"
             onClick={toggleLanguage}
-            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-zinc-900 border border-zinc-700/60 hover:bg-zinc-800 text-zinc-200 transition-colors"
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-zinc-900 dark:bg-zinc-900 light:bg-zinc-100 border border-zinc-700/60 dark:border-zinc-700/60 light:border-zinc-300 hover:bg-zinc-800 dark:hover:bg-zinc-800 light:hover:bg-zinc-200 text-zinc-200 dark:text-zinc-200 light:text-zinc-800 transition-colors"
           >
             <Globe className="w-3.5 h-3.5 text-zinc-400" />
             <span>{settings.language === 'fa' ? 'English' : 'فارسی'}</span>

@@ -19,40 +19,35 @@ import { getExerciseName, getDayName } from '../utils/exerciseTranslation';
 const STORAGE_KEY_PREFIX = 'fitprompt_ai_';
 
 export const DEFAULT_USER_PROFILE: UserProfile = {
-  name: 'علی رضا',
-  age: 27,
+  name: '',
+  age: undefined,
   sex: 'male',
-  height: 180,
+  height: undefined,
   heightUnit: 'cm',
-  weight: 78,
+  weight: undefined,
   weightUnit: 'kg',
   measurements: {
-    waistCm: 82,
-    chestCm: 104,
-    armCm: 38,
-    thighCm: 59
+    waistCm: undefined,
+    chestCm: undefined,
+    armCm: undefined,
+    thighCm: undefined
   },
   primaryGoal: 'Muscle Hypertrophy',
   secondaryGoal: 'Strength Progression',
-  priorityMuscles: ['Chest', 'Back', 'Shoulders', 'Biceps', 'Triceps', 'Quadriceps'],
-  experienceYears: 2.5,
+  priorityMuscles: ['Chest', 'Back', 'Shoulders', 'Quadriceps', 'Hamstrings', 'Biceps', 'Triceps'],
+  experienceYears: 1,
   experienceLevel: 'intermediate',
   currentSessionsPerWeek: 4,
-  avgSessionDurationMinutes: 65,
-  gymExperienceNotes: 'آشنایی با فرم صحیح حرکات چند مفصلی اصلی و اجرای کنترل‌شده',
-  knownPRs: {
-    benchPressKg: 85,
-    squatKg: 105,
-    deadliftKg: 130,
-    overheadPressKg: 52.5
-  },
-  hasInjuries: true,
-  injuryLocations: ['Left Shoulder'],
-  injuryDescription: 'التهاب خفیف در تاندون شانه چپ در زاویه باز بالای سر. از پرس پشت گردن پرهیز شود.',
-  forbiddenExercises: ['Behind the Neck Press', 'Upright Rows with Barbell'],
-  dislikedExercises: ['Pec Deck machine with jerky motion'],
-  preferredExercises: ['Barbell Bench Press', 'Incline DB Press', 'Barbell Squat', 'Lat Pulldown'],
-  cautionExercises: ['Heavy overhead barbell press'],
+  avgSessionDurationMinutes: 60,
+  gymExperienceNotes: '',
+  knownPRs: {},
+  hasInjuries: false,
+  injuryLocations: [],
+  injuryDescription: '',
+  forbiddenExercises: [],
+  dislikedExercises: [],
+  preferredExercises: [],
+  cautionExercises: [],
   availableEquipment: [
     'Full Gym', 
     'Barbell', 
@@ -66,27 +61,28 @@ export const DEFAULT_USER_PROFILE: UserProfile = {
   customEquipment: [],
   daysPerWeek: 4,
   preferredDays: ['Saturday', 'Sunday', 'Tuesday', 'Wednesday'],
-  sessionDurationMinutes: 65,
+  sessionDurationMinutes: 60,
   preferredTimeOfDay: 'evening',
   isScheduleFlexible: false,
   volumePreference: 'moderate',
-  intensityPreference: 'high',
+  intensityPreference: 'moderate',
   repRangePreference: 'hypertrophy_6_12',
   defaultRestSeconds: 90,
   allowSupersets: true,
-  allowDropSets: true,
+  allowDropSets: false,
   allowRestPause: false,
   trainingToFailure: 'last_set_only',
   nutrition: {
-    approximateCalories: 2600,
-    proteinGrams: 160,
-    dietType: 'high_protein',
-    dailyMealsCount: 4,
-    supplements: ['Whey Protein', 'Creatine Monohydrate', 'Omega-3', 'Vitamin D3']
+    approximateCalories: undefined,
+    proteinGrams: undefined,
+    dietType: 'standard',
+    dailyMealsCount: 3,
+    supplements: []
   }
 };
 
 export const DEFAULT_SETTINGS: AppSettings = {
+  theme: 'dark',
   language: 'fa',
   exerciseNameLanguage: 'fa',
   weightUnit: 'kg',
@@ -138,6 +134,8 @@ interface AppContextType {
   
   onboardingCompleted: boolean;
   setOnboardingCompleted: (val: boolean) => void;
+
+  resetAllData: () => void;
 
   restTimerSecondsRemaining: number | null;
   restTimerTotal: number;
@@ -208,78 +206,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   });
 
-  // 7. Workout History
+  // 7. Workout History (clean state - no mock/sample data)
   const [workoutHistory, setWorkoutHistory] = useState<WorkoutSession[]>(() => {
     try {
       const saved = localStorage.getItem(`${STORAGE_KEY_PREFIX}history`);
       if (saved) return JSON.parse(saved);
-      // Preload 2 realistic previous workouts so dashboard has immediate graphs
-      return [
-        {
-          id: 'hist_sess_01',
-          programId: SAMPLE_WORKOUT_PROGRAM.program.id,
-          programName: SAMPLE_WORKOUT_PROGRAM.program.name,
-          dayId: 'day_upper_a',
-          dayName: 'Upper Body A (Chest & Back Focus)',
-          startTime: new Date(Date.now() - 4 * 86400000).toISOString(),
-          endTime: new Date(Date.now() - 4 * 86400000 + 3600000).toISOString(),
-          durationSeconds: 3480,
-          totalVolumeKg: 7820,
-          totalSets: 20,
-          totalReps: 186,
-          newPRsCount: 1,
-          exercises: [],
-          notes: 'جلسه تمرینی عالی با پمپ عضلانی بالا',
-          rating: 5
-        },
-        {
-          id: 'hist_sess_02',
-          programId: SAMPLE_WORKOUT_PROGRAM.program.id,
-          programName: SAMPLE_WORKOUT_PROGRAM.program.name,
-          dayId: 'day_lower_a',
-          dayName: 'Lower Body A (Quad & Glute Dominant)',
-          startTime: new Date(Date.now() - 2 * 86400000).toISOString(),
-          endTime: new Date(Date.now() - 2 * 86400000 + 3720000).toISOString(),
-          durationSeconds: 3720,
-          totalVolumeKg: 9450,
-          totalSets: 22,
-          totalReps: 210,
-          newPRsCount: 2,
-          exercises: [],
-          notes: 'اسکات و پرس پا با تمرکز عالی بر کشش کنترل شده',
-          rating: 5
-        }
-      ];
+      return [];
     } catch {
       return [];
     }
   });
 
-  // 8. Personal Records (PRs)
+  // 8. Personal Records (clean state - no mock/sample data)
   const [personalRecords, setPersonalRecords] = useState<PersonalRecord[]>(() => {
     try {
       const saved = localStorage.getItem(`${STORAGE_KEY_PREFIX}prs`);
       if (saved) return JSON.parse(saved);
-      return [
-        {
-          exerciseName: 'Barbell Bench Press',
-          exerciseNameFa: 'پرس سینه هالتر',
-          metric: 'max_weight',
-          value: 85,
-          unit: 'kg',
-          date: '2026-09-15',
-          workoutSessionId: 'hist_sess_01'
-        },
-        {
-          exerciseName: 'Barbell Back Squat',
-          exerciseNameFa: 'اسکات هالتر از پشت',
-          metric: 'max_weight',
-          value: 105,
-          unit: 'kg',
-          date: '2026-09-17',
-          workoutSessionId: 'hist_sess_02'
-        }
-      ];
+      return [];
     } catch {
       return [];
     }
@@ -317,9 +260,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   useEffect(() => {
     localStorage.setItem(`${STORAGE_KEY_PREFIX}settings`, JSON.stringify(settings));
-    // Apply HTML direction and lang
+    // Apply HTML direction, lang, and theme
     document.documentElement.lang = settings.language;
     document.documentElement.dir = settings.language === 'fa' ? 'rtl' : 'ltr';
+    if (settings.theme === 'light') {
+      document.documentElement.classList.add('light');
+      document.documentElement.classList.remove('dark');
+    } else {
+      document.documentElement.classList.add('dark');
+      document.documentElement.classList.remove('light');
+    }
   }, [settings]);
 
   useEffect(() => {
@@ -644,6 +594,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setSettings((prev) => ({ ...prev, ...partial }));
   };
 
+  const resetAllData = () => {
+    setProfile(DEFAULT_USER_PROFILE);
+    setWorkoutHistory([]);
+    setPersonalRecords([]);
+    setActiveSession(null);
+    setPromptHistory([]);
+    setCustomExercises([]);
+    localStorage.removeItem(`${STORAGE_KEY_PREFIX}history`);
+    localStorage.removeItem(`${STORAGE_KEY_PREFIX}prs`);
+    localStorage.removeItem(`${STORAGE_KEY_PREFIX}active_session`);
+    localStorage.removeItem(`${STORAGE_KEY_PREFIX}prompt_history`);
+    localStorage.removeItem(`${STORAGE_KEY_PREFIX}custom_exercises`);
+  };
+
   const exerciseLibrary = [...INITIAL_EXERCISE_LIBRARY, ...customExercises];
 
   return (
@@ -676,6 +640,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         updateSettings,
         onboardingCompleted,
         setOnboardingCompleted,
+        resetAllData,
         restTimerSecondsRemaining,
         restTimerTotal,
         isRestTimerActive,
