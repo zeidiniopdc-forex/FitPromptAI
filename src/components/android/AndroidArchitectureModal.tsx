@@ -27,12 +27,79 @@ export const AndroidArchitectureModal: React.FC<AndroidArchitectureModalProps> =
   const lang = settings.language;
   const labels = t[lang];
 
-  const [activeCodeTab, setActiveCodeTab] = useState<'entity' | 'dao' | 'viewmodel' | 'compose' | 'gradle'>('entity');
+  const [activeCodeTab, setActiveCodeTab] = useState<'entity' | 'dao' | 'viewmodel' | 'compose' | 'gradle' | 'githubActions'>('githubActions');
   const [copied, setCopied] = useState<boolean>(false);
 
   if (!isOpen) return null;
 
   const codeSnippets = {
+    githubActions: `# .github/workflows/build-apk.yml
+# GitHub Actions Automated APK Builder
+name: Build Android APK
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'Build Type (debug or release)'
+        required: true
+        default: 'debug'
+
+permissions:
+  contents: write
+
+jobs:
+  build-apk:
+    name: Build & Package Android APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies & build
+        run: |
+          npm install
+          npm run build
+          npx cap sync android
+
+      - name: Set up Java JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: Grant execute permission
+        run: chmod +x android/gradlew
+
+      - name: Build Debug APK
+        run: |
+          cd android
+          ./gradlew assembleDebug --stacktrace
+          cd ..
+
+      - name: Collect Output APK
+        run: |
+          mkdir -p build-output
+          cp android/app/build/outputs/apk/debug/app-debug.apk build-output/fitprompt-ai-debug.apk
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: FitPrompt-AI-APK
+          path: build-output/*.apk
+          retention-days: 30`,
     entity: `// Room Database Entities in Kotlin
 package com.fitprompt.android.data.local.entities
 
@@ -277,6 +344,15 @@ dependencies {
 
         {/* Code Tabs */}
         <div className="flex items-center gap-1.5 pt-3 pb-2 border-b border-zinc-800/80 overflow-x-auto scrollbar-none shrink-0">
+          <button
+            onClick={() => setActiveCodeTab('githubActions')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5 ${
+              activeCodeTab === 'githubActions' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'text-zinc-400 hover:text-zinc-200'
+            }`}
+          >
+            <span>GitHub Actions (APK Build)</span>
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+          </button>
           <button
             onClick={() => setActiveCodeTab('entity')}
             className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors ${

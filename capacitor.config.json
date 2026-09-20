@@ -1,0 +1,8 @@
+{
+  "appId": "com.fitprompt.app",
+  "appName": "FitPrompt AI",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  }
+}
