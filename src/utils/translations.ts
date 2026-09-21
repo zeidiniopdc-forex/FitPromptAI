@@ -146,6 +146,10 @@ export const t = {
     promptInstructionsTab: 'Instructions for AI',
     promptPreviewTab: 'Prompt Text',
     promptHistoryTab: 'Saved Prompts',
+    copyInstructionsStep1: 'Next Step: Copy & Send to AI',
+    copyInstructionsStep2: 'Paste prompt into ChatGPT, Claude, or Gemini, then import the JSON response here.',
+    howToUsePromptTitle: 'How to use this AI Prompt with LLMs',
+    howToUsePromptDescription: 'This prompt includes strict scientific workout schemas and biometrics to generate perfectly formatted JSON workout programs.',
 
     // Progress & Analytics
     analyticsTitle: 'Progress Analytics',
@@ -376,6 +380,10 @@ export const t = {
     promptInstructionsTab: 'راهنمای کار با هوش مصنوعی',
     promptPreviewTab: 'پیش‌نمایش پرامپت',
     promptHistoryTab: 'پرامپت‌های قبلی',
+    copyInstructionsStep1: 'گام بعدی: کپی و ارسال به هوش مصنوعی',
+    copyInstructionsStep2: 'پرامپت را در هوش مصنوعی الصاق کرده و خروجی JSON را در بخش وارد کردن برنامه قرار دهید.',
+    howToUsePromptTitle: 'راهنمای استفاده از پرامپت با مدل‌های زبانی',
+    howToUsePromptDescription: 'این پرامپت ساختاریافته شامل تمامی متغیرهای بیومکانیکی شما برای تولید برنامه دقیق است.',
 
     // Progress & Analytics
     analyticsTitle: 'داشبورد پیشرفت و آنالیز',

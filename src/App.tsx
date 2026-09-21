@@ -14,6 +14,7 @@ import { OnboardingModal } from './components/onboarding/OnboardingModal';
 import { ImportModal } from './components/import/ImportModal';
 import { WorkoutCompletedModal } from './components/workout/WorkoutCompletedModal';
 import { AndroidArchitectureModal } from './components/android/AndroidArchitectureModal';
+import { BazaarSubscriptionModal } from './components/subscription/BazaarSubscriptionModal';
 import { WorkoutSession } from './types';
 
 const MainLayout: React.FC = () => {
@@ -26,6 +27,7 @@ const MainLayout: React.FC = () => {
   const [currentTab, setCurrentTab] = useState<TabType>('dashboard');
   const [showImportModal, setShowImportModal] = useState<boolean>(false);
   const [showAndroidCodeModal, setShowAndroidCodeModal] = useState<boolean>(false);
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState<boolean>(false);
   const [showOnboarding, setShowOnboarding] = useState<boolean>(!onboardingCompleted);
   const [completedSessionToCelebrate, setCompletedSessionToCelebrate] = useState<WorkoutSession | null>(null);
 
@@ -46,6 +48,7 @@ const MainLayout: React.FC = () => {
       <Header
         onOpenAndroidCode={() => setShowAndroidCodeModal(true)}
         onOpenImport={() => setShowImportModal(true)}
+        onOpenSubscription={() => setShowSubscriptionModal(true)}
       />
 
       {/* Main View Screen Body */}
@@ -71,6 +74,7 @@ const MainLayout: React.FC = () => {
         {currentTab === 'prompt' && (
           <PromptScreen
             onOpenImport={() => setShowImportModal(true)}
+            onOpenSubscription={() => setShowSubscriptionModal(true)}
           />
         )}
 
@@ -78,6 +82,7 @@ const MainLayout: React.FC = () => {
           <ProgramManager
             onOpenImport={() => setShowImportModal(true)}
             onStartWorkoutDay={handleStartWorkout}
+            onOpenSubscription={() => setShowSubscriptionModal(true)}
           />
         )}
 
@@ -134,6 +139,12 @@ const MainLayout: React.FC = () => {
       <AndroidArchitectureModal
         isOpen={showAndroidCodeModal}
         onClose={() => setShowAndroidCodeModal(false)}
+      />
+
+      {/* Cafe Bazaar In-App Purchase & VIP Subscription Flow Modal */}
+      <BazaarSubscriptionModal
+        isOpen={showSubscriptionModal}
+        onClose={() => setShowSubscriptionModal(false)}
       />
     </div>
   );

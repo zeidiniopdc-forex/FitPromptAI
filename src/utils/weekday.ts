@@ -43,38 +43,78 @@ export function normalizeDayString(raw?: string): WeekdayId | null {
   if (!raw) return null;
   const clean = raw.toLowerCase().trim().replace(/[\u200c\s-_]+/g, '');
 
-  // Specific Day 7 / Friday / جمعه
-  if (clean.includes('جمعه') || clean.includes('fri') || clean.includes('آدینه') || clean.includes('روزهفتم') || clean.includes('روز7') || clean.includes('روز۷') || clean.includes('جلسههفتم') || clean.includes('جلسه7') || clean.includes('جلسه۷') || clean.includes('day7')) {
+  // 1. Explicit Persian & English Day of Week names (Exact matches)
+  // Friday / جمعه
+  if (clean.includes('جمعه') || clean.includes('آدینه') || clean.includes('friday') || clean === 'fri') {
     return 'friday';
   }
 
-  // Specific Day 6 / Thursday / پنج‌شنبه
-  if (clean.includes('پنجشنبه') || clean.includes('پنج') || clean.includes('thu') || clean.includes('روزششم') || clean.includes('روز6') || clean.includes('روز۶') || clean.includes('جلسهششم') || clean.includes('جلسه6') || clean.includes('جلسه۶') || clean.includes('day6') || clean.includes('legs_b') || clean.includes('legsb')) {
+  // Thursday / پنج‌شنبه (Must match 'پنجشنبه', NOT loose 'پنج' or 'پنجم')
+  if (clean.includes('پنجشنبه') || clean.includes('thursday') || clean === 'thu') {
     return 'thursday';
   }
 
-  // Specific Day 5 / Wednesday / چهارشنبه
-  if (clean.includes('چهارشنبه') || clean.includes('چهار') || clean.includes('wed') || clean.includes('روزپنجم') || clean.includes('روز5') || clean.includes('روز۵') || clean.includes('جلسهپنجم') || clean.includes('جلسه5') || clean.includes('جلسه۵') || clean.includes('day5') || clean.includes('pull_b') || clean.includes('pullb')) {
+  // Wednesday / چهارشنبه (Must match 'چهارشنبه', NOT loose 'چهار' or 'چهارسر')
+  if (clean.includes('چهارشنبه') || clean.includes('wednesday') || clean === 'wed') {
     return 'wednesday';
   }
 
-  // Specific Day 4 / Tuesday / سه‌شنبه
-  if (clean.includes('سهشنبه') || (clean.includes('سه') && !clean.includes('شنبه')) || clean.includes('tue') || clean.includes('روزچهارم') || clean.includes('روز4') || clean.includes('روز۴') || clean.includes('جلسهچهارم') || clean.includes('جلسه4') || clean.includes('جلسه۴') || clean.includes('day4') || clean.includes('push_b') || clean.includes('pushb')) {
+  // Tuesday / سه‌شنبه (Must match 'سهشنبه', NOT 'جلسه' or 'سه‌سر')
+  if (clean.includes('سهشنبه') || clean.includes('tuesday') || clean === 'tue') {
     return 'tuesday';
   }
 
-  // Specific Day 3 / Monday / دوشنبه
-  if (clean.includes('دوشنبه') || clean.includes('mon') || clean.includes('روزسوم') || clean.includes('روز3') || clean.includes('روز۳') || clean.includes('جلسهسوم') || clean.includes('جلسه3') || clean.includes('جلسه۳') || clean.includes('day3') || clean.includes('legs_a') || clean.includes('legsa')) {
+  // Monday / دوشنبه
+  if (clean.includes('دوشنبه') || clean.includes('monday') || clean === 'mon') {
     return 'monday';
   }
 
-  // Specific Day 2 / Sunday / یک‌شنبه
-  if (clean.includes('یکشنبه') || clean.includes('sun') || clean.includes('روزدوم') || clean.includes('روز2') || clean.includes('روز۲') || clean.includes('جلسهدوم') || clean.includes('جلسه2') || clean.includes('جلسه۲') || clean.includes('day2') || clean.includes('pull_a') || clean.includes('pulla')) {
+  // Sunday / یک‌شنبه
+  if (clean.includes('یکشنبه') || clean.includes('sunday') || clean === 'sun') {
     return 'sunday';
   }
 
-  // Specific Day 1 / Saturday / شنبه
-  if (clean.includes('sat') || clean.includes('شنبه') || clean.includes('روزاول') || clean.includes('روز1') || clean.includes('روز۱') || clean.includes('جلسهاول') || clean.includes('جلسه1') || clean.includes('جلسه۱') || clean.includes('day1') || clean.includes('push_a') || clean.includes('pusha')) {
+  // Saturday / شنبه (Only standalone شنبه, not preceding یک/دو/سه/چهار/پنج)
+  if (
+    clean.includes('saturday') || 
+    clean === 'sat' || 
+    (clean.includes('شنبه') && 
+     !clean.includes('یکشنبه') && 
+     !clean.includes('دوشنبه') && 
+     !clean.includes('سهشنبه') && 
+     !clean.includes('چهارشنبه') && 
+     !clean.includes('پنجشنبه'))
+  ) {
+    return 'saturday';
+  }
+
+  // 2. Explicit Day / Session Ordinals in Iranian Week Order:
+  // شنبه = روز ۱, یک‌شنبه = روز ۲, دوشنبه = روز ۳, سه‌شنبه = روز ۴, چهارشنبه = روز ۵, پنج‌شنبه = روز ۶, جمعه = روز ۷
+  if (clean.includes('روزهفتم') || clean.includes('روز7') || clean.includes('روز۷') || clean.includes('جلسههفتم') || clean.includes('جلسه7') || clean.includes('جلسه۷') || clean.includes('day7') || clean === '7') {
+    return 'friday';
+  }
+
+  if (clean.includes('روزششم') || clean.includes('روز6') || clean.includes('روز۶') || clean.includes('جلسهششم') || clean.includes('جلسه6') || clean.includes('جلسه۶') || clean.includes('day6') || clean === '6' || clean.includes('legs_b') || clean.includes('legsb')) {
+    return 'thursday';
+  }
+
+  if (clean.includes('روزپنجم') || clean.includes('روز5') || clean.includes('روز۵') || clean.includes('جلسهپنجم') || clean.includes('جلسه5') || clean.includes('جلسه۵') || clean.includes('day5') || clean === '5' || clean.includes('pull_b') || clean.includes('pullb')) {
+    return 'wednesday';
+  }
+
+  if (clean.includes('روزچهارم') || clean.includes('روز4') || clean.includes('روز۴') || clean.includes('جلسهچهارم') || clean.includes('جلسه4') || clean.includes('جلسه۴') || clean.includes('day4') || clean === '4' || clean.includes('push_b') || clean.includes('pushb')) {
+    return 'tuesday';
+  }
+
+  if (clean.includes('روزسوم') || clean.includes('روز3') || clean.includes('روز۳') || clean.includes('جلسهسوم') || clean.includes('جلسه3') || clean.includes('جلسه۳') || clean.includes('day3') || clean === '3' || clean.includes('legs_a') || clean.includes('legsa')) {
+    return 'monday';
+  }
+
+  if (clean.includes('روزدوم') || clean.includes('روز2') || clean.includes('روز۲') || clean.includes('جلسهدوم') || clean.includes('جلسه2') || clean.includes('جلسه۲') || clean.includes('day2') || clean === '2' || clean.includes('pull_a') || clean.includes('pulla')) {
+    return 'sunday';
+  }
+
+  if (clean.includes('روزاول') || clean.includes('روز1') || clean.includes('روز۱') || clean.includes('جلسهاول') || clean.includes('جلسه1') || clean.includes('جلسه۱') || clean.includes('day1') || clean === '1' || clean.includes('push_a') || clean.includes('pusha')) {
     return 'saturday';
   }
 
@@ -160,7 +200,7 @@ export function matchWorkoutDayForDate<T extends {
 
     // Check if days already have explicit weekday assignments
     days.forEach((day, idx) => {
-      const explicitNorm = normalizeDayString(day.weekday) || normalizeDayString(day.day_id) || normalizeDayString(day.name);
+      const explicitNorm = normalizeDayString(day.weekday) || normalizeDayString(day.day_id);
       if (explicitNorm) {
         scheduleMap.set(explicitNorm, day);
       } else if (idx < iranian6DayWeekdays.length) {
@@ -176,11 +216,22 @@ export function matchWorkoutDayForDate<T extends {
       }
     });
   } else {
-    // 1. Direct explicit day matches (Persian names, weekday tags, or day IDs)
+    // 1. Direct explicit day matches (Prioritize weekday attribute first, then day_id)
     days.forEach((day) => {
-      const norm = normalizeDayString(day.weekday) || normalizeDayString(day.day_id) || normalizeDayString(day.name);
+      const norm = normalizeDayString(day.weekday) || normalizeDayString(day.day_id);
       if (norm && !scheduleMap.has(norm)) {
         scheduleMap.set(norm, day);
+      }
+    });
+
+    // 2. Secondary check for explicit day name if not matched yet
+    days.forEach((day) => {
+      const isMapped = Array.from(scheduleMap.values()).some((d) => (d as any).day_id === (day as any).day_id);
+      if (!isMapped) {
+        const norm = normalizeDayString(day.name);
+        if (norm && !scheduleMap.has(norm)) {
+          scheduleMap.set(norm, day);
+        }
       }
     });
 

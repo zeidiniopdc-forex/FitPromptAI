@@ -11,16 +11,23 @@ import {
   CheckCircle2,
   Share2,
   Sun,
-  Moon
+  Moon,
+  Crown,
+  Sparkles
 } from 'lucide-react';
 
 interface HeaderProps {
   onOpenAndroidCode?: () => void;
   onOpenImport?: () => void;
+  onOpenSubscription?: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ onOpenAndroidCode, onOpenImport }) => {
-  const { settings, updateSettings, activeSession } = useApp();
+export const Header: React.FC<HeaderProps> = ({ 
+  onOpenAndroidCode, 
+  onOpenImport,
+  onOpenSubscription 
+}) => {
+  const { settings, updateSettings, activeSession, isVip, subscription } = useApp();
   const lang = settings.language;
   const labels = t[lang];
   const isLight = settings.theme === 'light';
@@ -47,7 +54,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenAndroidCode, onOpenImport 
         {/* Left / Start: Synchronized App Icon and App Name */}
         <div className="flex items-center gap-2.5">
           <div className="w-9 h-9 rounded-xl overflow-hidden shadow-lg shadow-emerald-500/20 shrink-0 border border-emerald-500/30">
-            <img src="/icon.svg" alt="فیت‌پارسی هوشمند" className="w-full h-full object-cover" />
+            <img src="/bazaar_app_icon.jpg" alt="FitPrompt AI" className="w-full h-full object-cover" />
           </div>
           <div>
             <div className="flex items-center gap-1.5">
@@ -69,6 +76,28 @@ export const Header: React.FC<HeaderProps> = ({ onOpenAndroidCode, onOpenImport 
 
         {/* Right / End: Quick Actions & Toggles */}
         <div className="flex items-center gap-1.5 sm:gap-2">
+          {/* Cafe Bazaar VIP / Subscription Button */}
+          {onOpenSubscription && (
+            <button
+              id="btn-header-subscription"
+              onClick={onOpenSubscription}
+              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                isVip
+                  ? 'bg-amber-500/15 text-amber-300 border border-amber-500/40 hover:bg-amber-500/25 shadow-sm shadow-amber-500/10'
+                  : 'bg-gradient-to-r from-amber-500/20 via-emerald-500/15 to-teal-500/15 text-amber-300 border border-amber-500/40 hover:brightness-125'
+              }`}
+            >
+              <Crown className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+              {isVip ? (
+                <span className="hidden sm:inline">مشترک طلایی</span>
+              ) : (
+                <>
+                  <span className="hidden sm:inline">اشتراک بازار</span>
+                  <span className="sm:hidden text-[11px]">VIP</span>
+                </>
+              )}
+            </button>
+          )}
           {/* Theme Toggle (Light / Dark) */}
           <button
             id="btn-header-theme"

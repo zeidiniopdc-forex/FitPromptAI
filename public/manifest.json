@@ -1,13 +1,19 @@
 {
   "name": "FitPrompt AI - Workout Tracker",
   "short_name": "FitPrompt AI",
-  "description": "AI-agnostic workout program prompt generator, strict JSON validator, and professional workout tracker with progress analytics.",
+  "description": "اپلیکیشن حرفه‌ای بدنسازی و ردیاب تمرین کافه‌بازار با برنامه‌های پیش‌فرض رایگان، سیستم اشتراک ویژه بازار و تولیدکننده پرامپت اختصاصی هوش مصنوعی.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#09090b",
   "theme_color": "#10b981",
   "orientation": "portrait-primary",
   "icons": [
+    {
+      "src": "/bazaar_app_icon.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    },
     {
       "src": "/icon.svg",
       "sizes": "192x192 512x512",

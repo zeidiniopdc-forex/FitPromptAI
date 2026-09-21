@@ -19,14 +19,14 @@ interface BottomNavProps {
 }
 
 export const BottomNav: React.FC<BottomNavProps> = ({ currentTab, onSelectTab }) => {
-  const { settings, activeSession } = useApp();
+  const { settings, activeSession, isVip } = useApp();
   const lang = settings.language;
   const labels = t[lang];
 
-  const tabs: { id: TabType; label: string; icon: React.FC<{ className?: string }>; badge?: boolean }[] = [
+  const tabs: { id: TabType; label: string; icon: React.FC<{ className?: string }>; badge?: boolean; vipOnly?: boolean }[] = [
     { id: 'dashboard', label: labels.navDashboard, icon: LayoutDashboard },
     { id: 'workout', label: labels.navWorkout, icon: Dumbbell, badge: Boolean(activeSession) },
-    { id: 'prompt', label: lang === 'fa' ? 'پرامپت AI' : 'AI Prompt', icon: Sparkles },
+    { id: 'prompt', label: lang === 'fa' ? 'پرامپت AI' : 'AI Prompt', icon: Sparkles, vipOnly: true },
     { id: 'program', label: labels.navProgram, icon: FolderKanban },
     { id: 'progress', label: labels.navProgress, icon: LineChart },
     { id: 'profile', label: labels.navProfile, icon: UserCircle2 }
@@ -65,6 +65,11 @@ export const BottomNav: React.FC<BottomNavProps> = ({ currentTab, onSelectTab })
                 )}
                 {tab.badge && (
                   <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-zinc-950"></span>
+                )}
+                {tab.vipOnly && !isVip && (
+                  <span className="absolute -top-1 -left-1 px-1 py-0.2 rounded bg-amber-500 text-zinc-950 text-[8px] font-black tracking-tighter shadow">
+                    VIP
+                  </span>
                 )}
               </div>
               <span className="text-[10px] mt-0.5 tracking-tight line-clamp-1 whitespace-nowrap">

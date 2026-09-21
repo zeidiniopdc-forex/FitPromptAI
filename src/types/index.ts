@@ -285,6 +285,18 @@ export interface PromptHistoryItem {
 
 export type ThemeMode = 'dark' | 'light';
 
+export type SubscriptionPlanId = 'free' | 'vip_monthly' | 'vip_quarterly' | 'vip_yearly';
+
+export interface SubscriptionState {
+  isVip: boolean;
+  planId: SubscriptionPlanId;
+  planNameFa: string;
+  purchaseDate?: string;
+  expiresAt?: string | null;
+  orderId?: string;
+  isAutoRenew?: boolean;
+}
+
 export interface AppSettings {
   theme: ThemeMode;
   language: Language;

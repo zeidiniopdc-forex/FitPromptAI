@@ -38,7 +38,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
   onNavigateToProgress,
   onOpenImport
 }) => {
-  const { profile, activeProgram, workoutHistory, personalRecords, activeSession, settings } = useApp();
+  const { profile, activeProgram, workoutHistory, personalRecords, activeSession, settings, isVip } = useApp();
   const lang = settings.language;
   const labels = t[lang];
 
@@ -94,6 +94,11 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
           >
             <Sparkles className="w-3.5 h-3.5" />
             <span>{lang === 'fa' ? 'پرامپت هوش مصنوعی' : 'AI Prompt'}</span>
+            {!isVip && (
+              <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                VIP
+              </span>
+            )}
           </button>
 
           <button

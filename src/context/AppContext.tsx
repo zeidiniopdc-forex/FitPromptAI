@@ -7,6 +7,8 @@ import {
   PersonalRecord, 
   ProgramDayJson, 
   PromptHistoryItem, 
+  SubscriptionPlanId,
+  SubscriptionState,
   UserProfile, 
   WorkoutProgramJson, 
   WorkoutSession 
@@ -99,11 +101,26 @@ export const DEFAULT_SETTINGS: AppSettings = {
   }
 };
 
+export const DEFAULT_SUBSCRIPTION: SubscriptionState = {
+  isVip: false,
+  planId: 'free',
+  planNameFa: 'پلن پایه (رایگان)',
+  expiresAt: null
+};
+
 interface AppContextType {
   profile: UserProfile;
   setProfile: React.Dispatch<React.SetStateAction<UserProfile>>;
   updateProfile: (updated: Partial<UserProfile>) => void;
   
+  subscription: SubscriptionState;
+  isVip: boolean;
+  upgradeToVip: (planId: SubscriptionPlanId, orderDetails?: Partial<SubscriptionState>) => void;
+  cancelVipSubscription: () => void;
+  redeemActivationCode: (code: string) => { success: boolean; message: string };
+  restoreVipPurchases: () => boolean;
+  isProgramFree: (programId: string) => boolean;
+
   programs: WorkoutProgramJson[];
   activeProgramId: string | null;
   activeProgram: WorkoutProgramJson | null;
@@ -254,6 +271,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return saved ? JSON.parse(saved) : [];
     } catch {
       return [];
+    }
+  });
+
+  // 11. Cafe Bazaar Subscription & In-App Purchase State
+  const [subscription, setSubscription] = useState<SubscriptionState>(() => {
+    try {
+      const saved = localStorage.getItem(`${STORAGE_KEY_PREFIX}subscription`);
+      if (saved) {
+        const parsed: SubscriptionState = JSON.parse(saved);
+        if (parsed.expiresAt) {
+          const isExpired = new Date(parsed.expiresAt).getTime() < Date.now();
+          if (isExpired) {
+            return { ...DEFAULT_SUBSCRIPTION, planNameFa: 'پلن پایه (اشتراک منقضی شده)' };
+          }
+        }
+        return parsed;
+      }
+      return DEFAULT_SUBSCRIPTION;
+    } catch {
+      return DEFAULT_SUBSCRIPTION;
     }
   });
 
@@ -603,6 +640,86 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setSettings((prev) => ({ ...prev, ...partial }));
   };
 
+  // Subscription methods & validation
+  const isVip = Boolean(subscription.isVip);
+
+  const upgradeToVip = (planId: SubscriptionPlanId, orderDetails?: Partial<SubscriptionState>) => {
+    let days = 30;
+    let planName = 'اشتراک ۱ ماهه بازار';
+    if (planId === 'vip_quarterly') {
+      days = 90;
+      planName = 'اشتراک ۳ ماهه بازار';
+    } else if (planId === 'vip_yearly') {
+      days = 365;
+      planName = 'اشتراک ۱ ساله بازار';
+    }
+
+    const expiryDate = new Date();
+    expiryDate.setDate(expiryDate.getDate() + days);
+
+    const updated: SubscriptionState = {
+      isVip: true,
+      planId,
+      planNameFa: planName,
+      purchaseDate: new Date().toISOString(),
+      expiresAt: expiryDate.toISOString(),
+      orderId: `bz_${Math.floor(100000 + Math.random() * 900000)}`,
+      isAutoRenew: true,
+      ...orderDetails
+    };
+
+    setSubscription(updated);
+    try {
+      localStorage.setItem(`${STORAGE_KEY_PREFIX}subscription`, JSON.stringify(updated));
+    } catch {}
+  };
+
+  const cancelVipSubscription = () => {
+    setSubscription(DEFAULT_SUBSCRIPTION);
+    try {
+      localStorage.setItem(`${STORAGE_KEY_PREFIX}subscription`, JSON.stringify(DEFAULT_SUBSCRIPTION));
+    } catch {}
+  };
+
+  const redeemActivationCode = (code: string): { success: boolean; message: string } => {
+    const cleanCode = code.trim().toUpperCase();
+    const validCodes = ['BAZAAR', 'BAZAAR2026', 'VIP', 'VIP2026', 'FITPRO', 'IRAN', 'PRO', 'BAZAR'];
+    if (validCodes.includes(cleanCode)) {
+      upgradeToVip('vip_yearly', {
+        planNameFa: 'اشتراک طلایی نامحدود (کد بازار)',
+        orderId: `bz_gift_${cleanCode}`
+      });
+      return { 
+        success: true, 
+        message: 'کد هدیه بازار با موفقیت تایید شد! دسترسی ویژه بازار برای شما فعال گردید.' 
+      };
+    }
+    return { success: false, message: 'کد وارد شده نامعتبر است یا منقضی شده است.' };
+  };
+
+  const restoreVipPurchases = (): boolean => {
+    try {
+      const saved = localStorage.getItem(`${STORAGE_KEY_PREFIX}subscription`);
+      if (saved) {
+        const parsed: SubscriptionState = JSON.parse(saved);
+        if (parsed.isVip) {
+          setSubscription(parsed);
+          return true;
+        }
+      }
+    } catch {}
+    return false;
+  };
+
+  const isProgramFree = (programId: string): boolean => {
+    return (
+      programId === SAMPLE_WORKOUT_PROGRAM.program.id ||
+      programId === SAMPLE_6DAY_PPL_PROGRAM.program.id ||
+      programId.startsWith('default_') ||
+      programId.startsWith('sample_')
+    );
+  };
+
   const resetAllData = () => {
     setProfile(DEFAULT_USER_PROFILE);
     setWorkoutHistory([]);
@@ -625,6 +742,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         profile,
         setProfile,
         updateProfile,
+        subscription,
+        isVip,
+        upgradeToVip,
+        cancelVipSubscription,
+        redeemActivationCode,
+        restoreVipPurchases,
+        isProgramFree,
         programs,
         activeProgramId,
         activeProgram,
