@@ -182,6 +182,49 @@ export const PromptScreen: React.FC<PromptScreenProps> = ({ onOpenImport }) => {
       {/* Tab 1: Preview Prompt */}
       {activeTab === 'preview' && (
         <div className="space-y-4">
+          {/* TRAINEE PERSONALIZATION SUMMARY CARD */}
+          <div className="rounded-2xl bg-gradient-to-r from-emerald-950/30 via-zinc-900 to-teal-950/20 border border-emerald-500/30 p-4 shadow-lg">
+            <div className="flex items-center gap-2 mb-2 text-xs font-bold text-emerald-400">
+              <Sparkles className="w-4 h-4" />
+              <span>{lang === 'fa' ? 'شناسنامه و تحلیل شخصی‌سازی پرامپت شما' : 'Personalization & Scientific Audit'}</span>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+              <div className="p-2.5 rounded-xl bg-zinc-950/60 border border-zinc-800">
+                <span className="text-[10px] text-zinc-400 block">{lang === 'fa' ? 'مشخصات بدنی' : 'Biometrics'}</span>
+                <span className="font-bold text-white mt-0.5 block">
+                  {profile.weight || 75} kg | {profile.height || 178} cm
+                </span>
+                <span className="text-[10px] text-emerald-400">BMI ~{((profile.weight || 75) / Math.pow((profile.height || 178)/100, 2)).toFixed(1)}</span>
+              </div>
+
+              <div className="p-2.5 rounded-xl bg-zinc-950/60 border border-zinc-800">
+                <span className="text-[10px] text-zinc-400 block">{lang === 'fa' ? 'هدف اصلی و فرعی' : 'Goals'}</span>
+                <span className="font-bold text-white mt-0.5 block truncate">
+                  {profile.primaryGoal}
+                </span>
+                <span className="text-[10px] text-teal-400 truncate block">
+                  {profile.secondaryGoal ? `+ ${profile.secondaryGoal}` : (lang === 'fa' ? 'تمرکز تک‌هدفه' : 'Single Goal')}
+                </span>
+              </div>
+
+              <div className="p-2.5 rounded-xl bg-zinc-950/60 border border-zinc-800">
+                <span className="text-[10px] text-zinc-400 block">{lang === 'fa' ? 'عضلات اولویت‌دار' : 'Priority Muscles'}</span>
+                <span className="font-bold text-white mt-0.5 block truncate">
+                  {profile.priorityMuscles && profile.priorityMuscles.length > 0 ? profile.priorityMuscles.join(', ') : (lang === 'fa' ? 'توزیع متوازن' : 'Balanced')}
+                </span>
+                <span className="text-[10px] text-amber-400">{lang === 'fa' ? 'حرکت اول و حجم ویژه' : 'Movement #1 & MAV'}</span>
+              </div>
+
+              <div className="p-2.5 rounded-xl bg-zinc-950/60 border border-zinc-800">
+                <span className="text-[10px] text-zinc-400 block">{lang === 'fa' ? 'روزهای اختصاصی هفته' : 'Preferred Days'}</span>
+                <span className="font-bold text-white mt-0.5 block truncate">
+                  {profile.preferredDays && profile.preferredDays.length > 0 ? profile.preferredDays.join(' • ') : `${profile.daysPerWeek} روز`}
+                </span>
+                <span className="text-[10px] text-emerald-400">{lang === 'fa' ? 'تثبیت در خروجی AI' : 'Pinned to Days'}</span>
+              </div>
+            </div>
+          </div>
+
           <div className="relative bg-zinc-900 border border-zinc-800 rounded-2xl p-4 sm:p-5 shadow-inner">
             <div className="flex items-center justify-between pb-3 mb-3 border-b border-zinc-800/80 text-xs text-zinc-400">
               <span className="font-mono text-[11px]">FitPrompt Engine • AI-Agnostic Contract</span>

@@ -17,7 +17,10 @@ import {
   Dumbbell,
   Star,
   ChevronRight,
-  User
+  User,
+  Moon,
+  CalendarDays,
+  RotateCcw
 } from 'lucide-react';
 
 interface DashboardScreenProps {
@@ -41,16 +44,25 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
 
   // Intelligently detect today's day of week & match dedicated workout session
   const currentDays = activeProgram?.days || [];
-  const { todayDay, isExplicitMatch, currentDayInfo } = matchWorkoutDayForDate(
-    currentDays,
-    profile.preferredDays
-  );
+  const { 
+    todayDay, 
+    isExplicitMatch, 
+    isRestDay, 
+    nextDay, 
+    nextDayInfo, 
+    currentDayInfo, 
+    weekSchedule 
+  } = matchWorkoutDayForDate(currentDays, profile.preferredDays);
 
-  // Find next day in sequence
-  const todayIndex = todayDay ? currentDays.findIndex((d) => d.day_id === todayDay.day_id) : -1;
-  const nextDay = (todayIndex !== -1 && currentDays.length > 1)
-    ? currentDays[(todayIndex + 1) % currentDays.length]
-    : (currentDays[1] || currentDays[0] || null);
+  // Trainee can click any day in the 7-day schedule ribbon to preview or launch that session
+  const [selectedDayId, setSelectedDayId] = React.useState<string | null>(null);
+
+  // Active workout to display: either user-selected day, or today's matched workout day
+  const displayedDay = selectedDayId 
+    ? (currentDays.find((d) => d.day_id === selectedDayId) || todayDay)
+    : todayDay;
+
+  const isViewingDifferentDay = Boolean(selectedDayId && (!todayDay || selectedDayId !== todayDay.day_id));
 
   // Dynamic calculation based strictly on real user data (clean state)
   const streakDays = workoutHistory.length > 0 ? workoutHistory.length : 0;
@@ -94,7 +106,85 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
         </div>
       </div>
 
-      {/* TODAY'S WORKOUT HERO CARD (Requirement 36) */}
+      {/* 7-DAY INTERACTIVE WEEKLY SCHEDULE RIBBON */}
+      <div className="rounded-2xl bg-zinc-900/90 border border-zinc-800/80 p-4 shadow-lg backdrop-blur-sm">
+        <div className="flex items-center justify-between gap-2 mb-3">
+          <div className="flex items-center gap-2 text-xs font-bold text-zinc-300">
+            <CalendarDays className="w-4 h-4 text-emerald-400" />
+            <span>{lang === 'fa' ? 'تقویم و توزیع هفتگی جلسات شما' : 'Weekly Training Schedule'}</span>
+          </div>
+          {isViewingDifferentDay && (
+            <button
+              onClick={() => setSelectedDayId(null)}
+              className="flex items-center gap-1 text-[11px] font-bold text-emerald-400 hover:text-emerald-300 transition-colors"
+            >
+              <RotateCcw className="w-3 h-3" />
+              <span>{lang === 'fa' ? 'بازگشت به امروز' : 'Back to Today'}</span>
+            </button>
+          )}
+        </div>
+
+        {/* 7 Day Pills Grid */}
+        <div className="grid grid-cols-7 gap-1.5 sm:gap-2">
+          {weekSchedule.map((slot) => {
+            const isToday = slot.isToday;
+            const isSelected = selectedDayId === slot.assignedWorkout?.day_id;
+            const hasWorkout = Boolean(slot.assignedWorkout);
+
+            return (
+              <button
+                key={slot.dayInfo.id}
+                disabled={!hasWorkout}
+                onClick={() => {
+                  if (slot.assignedWorkout) {
+                    setSelectedDayId(slot.assignedWorkout.day_id);
+                  }
+                }}
+                className={`relative flex flex-col items-center justify-between p-2 rounded-xl text-center transition-all ${
+                  isToday 
+                    ? 'bg-emerald-500/15 border-2 border-emerald-500 text-white shadow-md shadow-emerald-500/10'
+                    : isSelected
+                    ? 'bg-teal-500/20 border-2 border-teal-400 text-white ring-2 ring-teal-500/30'
+                    : hasWorkout
+                    ? 'bg-zinc-800/70 hover:bg-zinc-800 border border-zinc-700/60 text-zinc-200 cursor-pointer'
+                    : 'bg-zinc-950/40 border border-zinc-800/40 text-zinc-500 opacity-60 cursor-default'
+                }`}
+              >
+                {/* Today Pin Indicator */}
+                {isToday && (
+                  <span className="absolute -top-2 left-1/2 -translate-x-1/2 px-1.5 py-0.2 rounded-full text-[9px] font-black bg-emerald-500 text-zinc-950 uppercase tracking-tighter shadow">
+                    {lang === 'fa' ? 'امروز' : 'Today'}
+                  </span>
+                )}
+
+                <span className="text-[11px] font-bold block pt-1">
+                  {lang === 'fa' ? slot.dayInfo.nameFa.slice(0, 3) : slot.dayInfo.nameEn.slice(0, 3)}
+                </span>
+
+                <div className="mt-1">
+                  {hasWorkout ? (
+                    <div className="w-6 h-6 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 mx-auto">
+                      <Dumbbell className="w-3 h-3" />
+                    </div>
+                  ) : (
+                    <div className="w-6 h-6 rounded-lg bg-zinc-800/40 flex items-center justify-center text-zinc-500 mx-auto">
+                      <Moon className="w-2.5 h-2.5 opacity-60" />
+                    </div>
+                  )}
+                </div>
+
+                <span className="text-[9px] font-medium truncate w-full mt-1 px-0.5 opacity-90">
+                  {hasWorkout
+                    ? (lang === 'fa' && slot.assignedWorkout?.name_fa ? slot.assignedWorkout.name_fa.split(' ')[0] : slot.assignedWorkout?.name.split(' ')[0])
+                    : (lang === 'fa' ? 'استراحت' : 'Rest')}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* TODAY'S / SELECTED WORKOUT HERO CARD */}
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-zinc-900 via-zinc-900 to-emerald-950/30 border border-emerald-500/30 p-6 shadow-2xl">
         {/* Glow ambient background */}
         <div className="absolute top-0 right-0 -mt-10 -mr-10 w-48 h-48 bg-emerald-500/15 rounded-full blur-3xl pointer-events-none" />
@@ -105,13 +195,23 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
               <span className="px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider bg-emerald-500 text-zinc-950 shadow-md flex items-center gap-1">
                 <Calendar className="w-3 h-3 inline-block" />
                 <span>{lang === 'fa' ? currentDayInfo.nameFa : currentDayInfo.nameEn}</span>
-                <span className="opacity-75 font-normal">• {labels.todayWorkoutTitle}</span>
+                <span className="opacity-75 font-normal">
+                  • {isViewingDifferentDay ? (lang === 'fa' ? 'جلسه انتخابی' : 'Selected Session') : labels.todayWorkoutTitle}
+                </span>
               </span>
-              {isExplicitMatch && (
+
+              {isExplicitMatch && !isViewingDifferentDay && (
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-500/20 text-teal-300 border border-teal-500/30">
                   {lang === 'fa' ? 'جلسه اختصاصی امروز' : 'Scheduled Today'}
                 </span>
               )}
+
+              {isViewingDifferentDay && (
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                  {lang === 'fa' ? 'پیش‌نمایش جلسه دیگر' : 'Viewing Another Day'}
+                </span>
+              )}
+
               {activeSession ? (
                 <span className="text-xs font-bold text-amber-400 flex items-center gap-1 animate-pulse">
                   ● {lang === 'fa' ? 'جلسه در حال اجرا' : 'In Progress'}
@@ -123,50 +223,73 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
               )}
             </div>
 
-            {todayDay ? (
+            {displayedDay ? (
               <>
                 <h3 className="text-xl sm:text-2xl font-black text-white">
-                  {getDayName(todayDay.name, lang, todayDay.name_fa)}
+                  {getDayName(displayedDay.name, lang, displayedDay.name_fa)}
                 </h3>
                 <p className="text-xs sm:text-sm text-emerald-400 font-medium">
-                  {todayDay.focus?.map((f) => getMuscleGroupName(f, lang)).join(' • ') || (lang === 'fa' ? 'تمرکز هایپرتروفی' : 'Hypertrophy Focus')}
+                  {displayedDay.focus?.map((f) => getMuscleGroupName(f, lang)).join(' • ') || (lang === 'fa' ? 'تمرکز هایپرتروفی' : 'Hypertrophy Focus')}
                 </p>
                 <div className="flex items-center gap-4 text-xs text-zinc-400 pt-1">
-                  <span>{todayDay.exercises.length} {labels.exerciseCount}</span>
+                  <span>{displayedDay.exercises.length} {labels.exerciseCount}</span>
                   <span>•</span>
                   <span>~{profile.sessionDurationMinutes || 60} {lang === 'fa' ? 'دقیقه' : 'min'}</span>
                   <span>•</span>
-                  <span>{todayDay.exercises.reduce((a, b) => a + b.sets, 0)} {labels.totalSets}</span>
+                  <span>{displayedDay.exercises.reduce((a, b) => a + b.sets, 0)} {labels.totalSets}</span>
                 </div>
               </>
             ) : (
-              <div>
-                <h3 className="text-lg font-bold text-white">
-                  {labels.restDayTitle}
-                </h3>
-                <p className="text-xs text-zinc-400 mt-1">
-                  {labels.restDaySubtitle}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-emerald-400">
+                  <Moon className="w-5 h-5" />
+                  <h3 className="text-lg sm:text-xl font-bold text-white">
+                    {labels.restDayTitle}
+                  </h3>
+                </div>
+                <p className="text-xs text-zinc-400 max-w-md">
+                  {lang === 'fa' 
+                    ? 'امروز در برنامه شما روز استراحت و بازسازی عضلانی است. عضلات در فاز ریکاوری رشد می‌کنند.'
+                    : labels.restDaySubtitle}
                 </p>
+                {nextDay && (
+                  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-zinc-800/80 border border-zinc-700/60 text-xs text-zinc-300">
+                    <span className="text-emerald-400 font-bold">{lang === 'fa' ? 'جلسه بعدی:' : 'Next Session:'}</span>
+                    <span>{getDayName(nextDay.name, lang, nextDay.name_fa)}</span>
+                    {nextDayInfo && <span className="text-zinc-500">({lang === 'fa' ? nextDayInfo.nameFa : nextDayInfo.nameEn})</span>}
+                  </div>
+                )}
               </div>
             )}
           </div>
 
-          {/* Action Button */}
-          <div className="shrink-0">
-            {todayDay && (
+          {/* Action Buttons */}
+          <div className="shrink-0 flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+            {displayedDay ? (
               <button
                 id="btn-hero-start-workout"
-                onClick={() => onStartWorkout(todayDay.day_id)}
-                className="w-full sm:w-auto px-7 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-zinc-950 font-black text-sm shadow-xl shadow-emerald-500/25 active:scale-95 transition-all flex items-center justify-center gap-2"
+                onClick={() => onStartWorkout(displayedDay.day_id)}
+                className="px-7 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-zinc-950 font-black text-sm shadow-xl shadow-emerald-500/25 active:scale-95 transition-all flex items-center justify-center gap-2"
               >
                 <Play className="w-5 h-5 fill-current" />
                 <span>
                   {activeSession 
                     ? (lang === 'fa' ? 'ادامه تمرین زنده' : 'Resume Workout') 
+                    : isViewingDifferentDay
+                    ? (lang === 'fa' ? 'شروع این جلسه' : 'Start This Workout')
                     : labels.startWorkout}
                 </span>
               </button>
-            )}
+            ) : nextDay ? (
+              <button
+                id="btn-hero-start-next-workout"
+                onClick={() => onStartWorkout(nextDay.day_id)}
+                className="px-6 py-3 rounded-2xl bg-zinc-800 hover:bg-zinc-700 border border-emerald-500/30 text-emerald-300 font-bold text-xs shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2"
+              >
+                <Play className="w-4 h-4 fill-current" />
+                <span>{lang === 'fa' ? 'شروع جلسه بعدی پیش از موعد' : 'Start Next Session Early'}</span>
+              </button>
+            ) : null}
           </div>
         </div>
       </div>
