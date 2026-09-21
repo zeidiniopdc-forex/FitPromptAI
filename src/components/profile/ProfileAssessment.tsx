@@ -439,6 +439,27 @@ export const ProfileAssessment: React.FC<ProfileAssessmentProps> = ({
               </div>
             </div>
 
+            {/* Dynamic Goal Synergy Impact Preview */}
+            <div className="p-3.5 rounded-2xl bg-emerald-950/20 border border-emerald-500/30 text-xs">
+              <div className="font-bold text-emerald-400 mb-1 flex items-center gap-1.5">
+                <Target className="w-3.5 h-3.5" />
+                <span>{lang === 'fa' ? 'تأثیر علمی اهداف در تنظیم پرامپت:' : 'Goal Synergy in Prompt Generator:'}</span>
+              </div>
+              <p className="text-zinc-300 leading-relaxed">
+                {formData.primaryGoal === 'Muscle Hypertrophy' && formData.secondaryGoal === 'Strength Progression'
+                  ? (lang === 'fa' 
+                      ? 'پروتکل هیبرید Powerbuilding: شروع هر جلسه با یک حرکت فوق‌سنگین چندمفصلی (۳ تا ۵ تکرار با استراحت کامل)، سپس ۴ حرکت حجم‌دهنده با حجم بالا (۸ تا ۱۲ تکرار).' 
+                      : 'Powerbuilding Protocol: Heavy compound primer (3-5 reps, full recovery), followed by high-volume hypertrophy accessories (8-12 reps).')
+                  : formData.primaryGoal === 'Muscle Hypertrophy' && formData.secondaryGoal === 'Fat Loss & Definition'
+                  ? (lang === 'fa'
+                      ? 'هایپرتروفی با چگالی بالا: حفظ وزنه‌های سنگین برای جلوگیری از تحلیل عضله در کات، ترکیب حرکات با سوپرست‌های متضاد و زمان استراحت کوتاه‌تر (۶۰ تا ۷۵ ثانیه).'
+                      : 'High-Density Lean Hypertrophy: Preserves myofibrillar load with antagonist supersets and restricted rest.')
+                  : (lang === 'fa'
+                      ? `هدف اصلی (${formData.primaryGoal}) تعیین‌کننده ۷۰٪ از ساختار تکرارها و سیستم بارگذاری بوده و هدف فرعی (${formData.secondaryGoal || 'بدون هدف فرعی'}) نحوه مدیریت خستگی و انتخاب حرکات جانبی را هدایت می‌کند.`
+                      : `Primary goal drives 70% of rep schemes and loads; secondary goal directs fatigue management and accessory selection.`)}
+              </p>
+            </div>
+
             {/* Muscle Priority Reordering (Drag / Up / Down) */}
             <div className="pt-4 border-t border-zinc-800">
               <div className="mb-3">
@@ -967,6 +988,39 @@ export const ProfileAssessment: React.FC<ProfileAssessmentProps> = ({
                   <option value="moderate">{lang === 'fa' ? 'متوسط (تعادل بهینه ریکاوری)' : 'Moderate Volume'}</option>
                   <option value="high">{lang === 'fa' ? 'بالا (تعداد ست‌های بیشتر)' : 'High Volume'}</option>
                 </select>
+                <div className="mt-2 p-2 rounded-xl bg-zinc-950 border border-zinc-800 text-[11px] text-zinc-400">
+                  {formData.volumePreference === 'high' ? (
+                    lang === 'fa' ? (
+                      <span>
+                        <strong className="text-emerald-400">حجم بالا:</strong> در برنامه ۴ روزه، هر حرکت اصلی ۴ تا ۵ ست (مجموع ۲۰ تا ۲۴ ست در جلسه) و در برنامه ۶ روزه، هر حرکت ۳ تا ۴ ست (مجموع ۱۵ تا ۱۸ ست در جلسه با فرکانس دوبرابر).
+                      </span>
+                    ) : (
+                      <span>
+                        <strong className="text-emerald-400">High Volume:</strong> 4-day programs prescribe 4-5 sets per compound (20-24 total sets/session); 6-day programs prescribe 3-4 sets (15-18 sets/session at double frequency).
+                      </span>
+                    )
+                  ) : formData.volumePreference === 'low' ? (
+                    lang === 'fa' ? (
+                      <span>
+                        <strong className="text-amber-400">حجم کم / شدت بالا:</strong> ۲ تا ۳ ست نزدیک به ناتوانی کامل (RIR 0-1) با حجم کلی ۱۰ تا ۱۲ ست در هر جلسه.
+                      </span>
+                    ) : (
+                      <span>
+                        <strong className="text-amber-400">Low Volume:</strong> 2-3 sets per exercise close to failure (RIR 0-1), 10-12 total sets/session.
+                      </span>
+                    )
+                  ) : (
+                    lang === 'fa' ? (
+                      <span>
+                        <strong className="text-teal-400">حجم استاندارد:</strong> ۳ تا ۴ ست در حرکات اصلی و ۳ ست در حرکات جانبی (تعادل بهینه پیشرفت و ریکاوری).
+                      </span>
+                    ) : (
+                      <span>
+                        <strong className="text-teal-400">Moderate Volume:</strong> 3-4 sets on compounds, 3 sets on accessories.
+                      </span>
+                    )
+                  )}
+                </div>
               </div>
 
               <div>

@@ -40,7 +40,7 @@ const MainLayout: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col font-sans selection:bg-emerald-500/30 transition-colors duration-200">
+    <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-zinc-950 text-zinc-100 flex flex-col font-sans selection:bg-emerald-500/30 transition-colors duration-200">
       {/* Top Android Material 3 App Bar */}
       <Header
         onOpenAndroidCode={() => setShowAndroidCodeModal(true)}
@@ -48,7 +48,7 @@ const MainLayout: React.FC = () => {
       />
 
       {/* Main View Screen Body */}
-      <main className="flex-1 w-full max-w-5xl mx-auto">
+      <main className="flex-1 w-full max-w-5xl mx-auto overflow-x-hidden px-1 sm:px-4">
         {currentTab === 'dashboard' && (
           <DashboardScreen
             onStartWorkout={handleStartWorkout}

@@ -131,6 +131,52 @@ export const ActiveWorkoutTracker: React.FC<ActiveWorkoutTrackerProps> = ({
     updateLoggedSet(exIdx, setIdx, { actualReps: newReps });
   };
 
+  // Auto-advance logic when user checks off a set
+  const handleSetCheckClick = (exIdx: number, setIdx: number) => {
+    const currentEx = activeSession.exercises[exIdx];
+    const currentSet = currentEx?.sets[setIdx];
+    const willBeCompleted = !currentSet?.isCompleted;
+
+    completeSet(exIdx, setIdx);
+
+    if (willBeCompleted) {
+      // If there is another set in the current exercise, smoothly scroll to it
+      if (setIdx < currentEx.sets.length - 1) {
+        setTimeout(() => {
+          const nextSetEl = document.getElementById(`set-row-${exIdx}-${setIdx + 1}`);
+          if (nextSetEl) {
+            nextSetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            nextSetEl.classList.add('ring-2', 'ring-emerald-500/50');
+            setTimeout(() => {
+              nextSetEl.classList.remove('ring-2', 'ring-emerald-500/50');
+            }, 800);
+          }
+        }, 80);
+      } else {
+        // Last set of current exercise! Automatically advance to the next exercise
+        if (exIdx + 1 < activeSession.exercises.length) {
+          setExpandedExerciseIndex(exIdx + 1);
+          setTimeout(() => {
+            const nextExCard = document.getElementById(`exercise-card-${exIdx + 1}`);
+            if (nextExCard) {
+              nextExCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              nextExCard.classList.add('ring-2', 'ring-emerald-500/50');
+              setTimeout(() => {
+                nextExCard.classList.remove('ring-2', 'ring-emerald-500/50');
+              }, 900);
+            }
+          }, 150);
+        } else {
+          // Last set of the entire workout! Scroll to finish button
+          setTimeout(() => {
+            const finishBtn = document.getElementById('btn-finish-session-modal-open');
+            finishBtn?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }, 150);
+        }
+      }
+    }
+  };
+
   const handleFinish = () => {
     const finished = finishWorkoutSession(workoutNotes, workoutRating);
     if (finished && onSessionFinished) {
@@ -151,9 +197,9 @@ export const ActiveWorkoutTracker: React.FC<ActiveWorkoutTrackerProps> = ({
   const totalSetsCount = activeSession.exercises.reduce((acc, ex) => acc + ex.sets.length, 0);
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-4 pb-32">
+    <div className="w-full max-w-4xl mx-auto px-3 sm:px-4 py-4 pb-32 overflow-x-hidden">
       {/* Top Session Status Bar */}
-      <div className="sticky top-14 z-30 bg-zinc-950/95 backdrop-blur-md border-b border-zinc-800/80 -mx-4 px-4 py-3 mb-4 flex items-center justify-between gap-3 shadow-md">
+      <div className="sticky top-14 z-30 bg-zinc-950/95 backdrop-blur-md border border-zinc-800/80 rounded-2xl px-3.5 sm:px-4 py-3 mb-4 flex items-center justify-between gap-2 shadow-md w-full">
         <div>
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
@@ -197,6 +243,7 @@ export const ActiveWorkoutTracker: React.FC<ActiveWorkoutTrackerProps> = ({
 
           return (
             <div
+              id={`exercise-card-${exIdx}`}
               key={exercise.exerciseId || exIdx}
               className={`border rounded-2xl overflow-hidden transition-all ${
                 completedInThisEx === exercise.sets.length && exercise.sets.length > 0
@@ -207,10 +254,10 @@ export const ActiveWorkoutTracker: React.FC<ActiveWorkoutTrackerProps> = ({
               {/* Exercise Header Card (Accordion toggle) */}
               <div
                 onClick={() => setExpandedExerciseIndex(isExpanded ? -1 : exIdx)}
-                className="p-4 flex items-center justify-between cursor-pointer select-none hover:bg-zinc-800/30 transition-colors"
+                className="p-3.5 sm:p-4 flex items-center justify-between cursor-pointer select-none hover:bg-zinc-800/30 transition-colors gap-2"
               >
-                <div className="flex items-center gap-3">
-                  <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs ${
+                <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
+                  <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 ${
                     completedInThisEx === exercise.sets.length
                       ? 'bg-emerald-500/20 text-emerald-400'
                       : 'bg-zinc-800 text-zinc-300'
@@ -218,14 +265,14 @@ export const ActiveWorkoutTracker: React.FC<ActiveWorkoutTrackerProps> = ({
                     {exIdx + 1}
                   </div>
 
-                  <div>
-                    <h3 className="text-sm sm:text-base font-bold text-white flex items-center gap-2">
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-sm sm:text-base font-bold text-white flex items-center gap-1.5 truncate">
                       {getExerciseName(exercise.name, lang, { fallbackFa: exercise.nameFa, exerciseId: exercise.exerciseId })}
                       {completedInThisEx === exercise.sets.length && (
-                        <Check className="w-4 h-4 text-emerald-400" />
+                        <Check className="w-4 h-4 text-emerald-400 shrink-0" />
                       )}
                     </h3>
-                    <div className="flex items-center gap-2 text-[11px] text-zinc-400 mt-0.5">
+                    <div className="flex items-center gap-1.5 sm:gap-2 text-[11px] text-zinc-400 mt-0.5 flex-wrap">
                       <span className="text-emerald-400">{getMuscleGroupName(exercise.muscleGroup, lang)}</span>
                       <span>•</span>
                       <span>{exercise.sets.length} {labels.totalSets}</span>
@@ -237,14 +284,14 @@ export const ActiveWorkoutTracker: React.FC<ActiveWorkoutTrackerProps> = ({
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 text-zinc-400">
+                <div className="flex items-center gap-2 text-zinc-400 shrink-0">
                   {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
                 </div>
               </div>
 
               {/* Expanded Exercise Body */}
               {isExpanded && (
-                <div className="p-4 pt-0 border-t border-zinc-800/80 space-y-3">
+                <div className="p-3.5 sm:p-4 pt-0 border-t border-zinc-800/80 space-y-3">
                   {exercise.notes && (
                     <div className="p-2.5 rounded-xl bg-zinc-950/80 border border-zinc-800 text-xs text-zinc-400 flex items-start gap-2">
                       <Info className="w-3.5 h-3.5 text-teal-400 shrink-0 mt-0.5" />
@@ -256,8 +303,9 @@ export const ActiveWorkoutTracker: React.FC<ActiveWorkoutTrackerProps> = ({
                   <div className="space-y-2.5">
                     {exercise.sets.map((set, setIdx) => (
                       <div
+                        id={`set-row-${exIdx}-${setIdx}`}
                         key={setIdx}
-                        className={`p-3 rounded-xl border transition-all ${
+                        className={`p-2.5 sm:p-3 rounded-xl border transition-all ${
                           set.isCompleted
                             ? 'bg-emerald-950/20 border-emerald-500/40'
                             : 'bg-zinc-950 border-zinc-800'
@@ -265,22 +313,22 @@ export const ActiveWorkoutTracker: React.FC<ActiveWorkoutTrackerProps> = ({
                       >
                         {/* Set Top Row: Set #, Target Info, Checkbox */}
                         <div className="flex items-center justify-between gap-2 mb-2">
-                          <div className="flex items-center gap-2">
-                            <span className="w-6 h-6 rounded-lg bg-zinc-800 text-zinc-300 text-xs font-bold flex items-center justify-center">
+                          <div className="min-w-0 flex-1 flex flex-wrap items-center gap-1.5">
+                            <span className="w-6 h-6 rounded-lg bg-zinc-800 text-zinc-300 text-xs font-bold flex items-center justify-center shrink-0">
                               {set.setNumber}
                             </span>
-                            <span className="text-[11px] text-zinc-400">
+                            <span className="text-[11px] text-zinc-400 truncate">
                               {lang === 'fa' ? 'هدف:' : 'Target:'} {set.targetReps} reps
                               {set.targetWeightKg ? ` @ ${set.targetWeightKg}kg` : ''}
                               {set.targetRir !== null ? ` (RIR ${set.targetRir})` : ''}
                             </span>
                             {set.isWarmup && (
-                              <span className="px-1.5 py-0.5 rounded text-[9px] bg-amber-500/20 text-amber-300 font-bold">
+                              <span className="px-1.5 py-0.5 rounded text-[9px] bg-amber-500/20 text-amber-300 font-bold shrink-0">
                                 WARMUP
                               </span>
                             )}
                             {set.isDropSet && (
-                              <span className="px-1.5 py-0.5 rounded text-[9px] bg-rose-500/20 text-rose-300 font-bold">
+                              <span className="px-1.5 py-0.5 rounded text-[9px] bg-rose-500/20 text-rose-300 font-bold shrink-0">
                                 DROP SET
                               </span>
                             )}
@@ -289,8 +337,8 @@ export const ActiveWorkoutTracker: React.FC<ActiveWorkoutTrackerProps> = ({
                           {/* Big Checkbox for Complete (Gym ergonomics) */}
                           <button
                             id={`btn-check-set-${exIdx}-${setIdx}`}
-                            onClick={() => completeSet(exIdx, setIdx)}
-                            className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-95 ${
+                            onClick={() => handleSetCheckClick(exIdx, setIdx)}
+                            className={`w-10 h-10 rounded-xl shrink-0 flex items-center justify-center transition-all active:scale-95 ${
                               set.isCompleted
                                 ? 'bg-emerald-500 text-zinc-950 shadow-md shadow-emerald-500/30'
                                 : 'bg-zinc-800 hover:bg-zinc-700 text-zinc-400 border border-zinc-700'
@@ -328,7 +376,7 @@ export const ActiveWorkoutTracker: React.FC<ActiveWorkoutTrackerProps> = ({
                               <button
                                 type="button"
                                 onClick={() => adjustSetWeight(exIdx, setIdx, -1.25)}
-                                className="w-7 h-7 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 flex items-center justify-center text-xs"
+                                className="w-7 h-7 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 flex items-center justify-center text-xs shrink-0"
                               >
                                 <Minus className="w-3 h-3" />
                               </button>
@@ -341,12 +389,12 @@ export const ActiveWorkoutTracker: React.FC<ActiveWorkoutTrackerProps> = ({
                                     actualWeightKg: Number(e.target.value) || 0
                                   })
                                 }
-                                className="flex-1 bg-zinc-950 border border-zinc-800 rounded-lg px-2 py-1.5 text-center font-bold text-sm text-white focus:outline-none focus:border-emerald-500"
+                                className="flex-1 min-w-0 bg-zinc-950 border border-zinc-800 rounded-lg px-2 py-1.5 text-center font-bold text-sm text-white focus:outline-none focus:border-emerald-500"
                               />
                               <button
                                 type="button"
                                 onClick={() => adjustSetWeight(exIdx, setIdx, +1.25)}
-                                className="w-7 h-7 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 flex items-center justify-center text-xs"
+                                className="w-7 h-7 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 flex items-center justify-center text-xs shrink-0"
                               >
                                 <Plus className="w-3 h-3" />
                               </button>
@@ -379,7 +427,7 @@ export const ActiveWorkoutTracker: React.FC<ActiveWorkoutTrackerProps> = ({
                               <button
                                 type="button"
                                 onClick={() => adjustSetReps(exIdx, setIdx, -1)}
-                                className="w-7 h-7 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 flex items-center justify-center text-xs"
+                                className="w-7 h-7 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 flex items-center justify-center text-xs shrink-0"
                               >
                                 <Minus className="w-3 h-3" />
                               </button>
@@ -392,12 +440,12 @@ export const ActiveWorkoutTracker: React.FC<ActiveWorkoutTrackerProps> = ({
                                     actualReps: Number(e.target.value) || 0
                                   })
                                 }
-                                className="flex-1 bg-zinc-950 border border-zinc-800 rounded-lg px-2 py-1.5 text-center font-bold text-sm text-white focus:outline-none focus:border-emerald-500"
+                                className="flex-1 min-w-0 bg-zinc-950 border border-zinc-800 rounded-lg px-2 py-1.5 text-center font-bold text-sm text-white focus:outline-none focus:border-emerald-500"
                               />
                               <button
                                 type="button"
                                 onClick={() => adjustSetReps(exIdx, setIdx, +1)}
-                                className="w-7 h-7 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 flex items-center justify-center text-xs"
+                                className="w-7 h-7 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 flex items-center justify-center text-xs shrink-0"
                               >
                                 <Plus className="w-3 h-3" />
                               </button>

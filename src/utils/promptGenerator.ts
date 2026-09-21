@@ -2,6 +2,79 @@ import { UserProfile } from '../types';
 
 export const PROMPT_VERSION = "1.0";
 
+// Formulate deep scientific guidance based on Primary & Secondary Goals
+function getGoalSpecificDirectives(primaryGoal: string, secondaryGoal?: string): string {
+  const goalDescriptions: Record<string, string> = {
+    'Muscle Hypertrophy': `
+- PRIMARY GOAL DIRECTIVE (HYPERTROPHY / عضله‌سازی):
+  * Physiological Driver: Maximize mechanical tension through full active range of motion, coupled with targeted metabolic accumulation.
+  * Loading Spectrum: 6-12 rep core window (8-10 reps for compound prime movers, 10-15 reps for stable machine/cable isolations).
+  * Weekly Muscle Volume: 14-22 weekly working sets for priority muscles, distributed across 2 weekly exposures.
+  * Tempo & Contraction: 3-0-1-0 tempo with a controlled 3-second eccentric phase to induce microtrauma without joint breakdown.
+  * Proximity to Failure: RIR 1-2 on compounds, RIR 0-1 on isolation movements. Rest 2-3 min for compounds, 60-90s for accessories.`,
+
+    'Strength Progression': `
+- PRIMARY GOAL DIRECTIVE (STRENGTH PROGRESSION / افزایش قدرت و رکورد):
+  * Physiological Driver: Neural adaptation, high-threshold motor unit recruitment, and intermuscular coordination.
+  * Loading Spectrum: Heavy compound movements (Squat, Bench Press, Deadlift, Overhead Press, Weighted Pull-Up) programmed in 3-6 rep ranges at RPE 8-9 (RIR 2-3).
+  * Rest Intervals: Generous 3 to 5 minutes between heavy sets to allow complete phosphocreatine (PCr) replenishment and central nervous system recovery.
+  * Periodization: Linear or undulating progression on main lifts; accessories programmed strictly to eliminate biomechanical sticking points.`,
+
+    'Fat Loss & Definition': `
+- PRIMARY GOAL DIRECTIVE (FAT LOSS & CUTTING / کاهش چربی و کات):
+  * Physiological Driver: Retain lean contractile muscle tissue during a caloric deficit while maximizing training density and metabolic expenditure.
+  * Loading Spectrum: Maintain heavy compound loads (6-10 reps) to signal muscle retention to the nervous system; combine accessories into non-competing antagonist supersets.
+  * Rest Intervals: Structured 45-75 seconds to maintain elevated metabolic rate and cardiovascular demand without compromising technical form.
+  * Fatigue Management: Avoid excessive empty junk volume that compromises recovery capacity under restricted nutrition.`,
+
+    'Endurance & Stamina': `
+- PRIMARY GOAL DIRECTIVE (MUSCULAR ENDURANCE / استقامت عضلانی):
+  * Physiological Driver: Mitochondrial density, capillary proliferation, and enhanced lactate clearance.
+  * Loading Spectrum: 15-25+ reps per set with short rest periods (30-45 seconds).
+  * Methods: Incorporate rest-pause sets, ascending rep ladders, and continuous tension techniques.`,
+
+    'Functional Fitness & Mobility': `
+- PRIMARY GOAL DIRECTIVE (FUNCTIONAL & MOBILITY / آمادگی جسمانی و تحرک):
+  * Physiological Driver: Multi-planar stability (sagittal, frontal, transverse), unilateral balance, and rotational power.
+  * Movement Selection: Prioritize unilateral movements (Bulgarian split squats, single-arm DB rows), loaded carries, core anti-rotation, and multi-joint transitions.
+  * Loading Spectrum: 8-15 reps with deliberate end-range control and dynamic mobility warmups.`,
+
+    'Joint Health & Rehabilitation': `
+- PRIMARY GOAL DIRECTIVE (JOINT HEALTH & LONGEVITY / سلامت مفاصل):
+  * Physiological Driver: Joint decompression, tendon remodeling, and zero axial spinal shear.
+  * Movement Selection: Substitute free-weight axial loads with supported machine or cable variations (e.g. Chest-Supported T-Bar Row instead of Bent-Over Barbell Row; Hack Squat or Leg Press instead of Back Squat).
+  * Tempo: 3-1-2-0 with 1-second isometric hold in peak contraction. Reps: 10-15 reps.`
+  };
+
+  const primaryBlock = goalDescriptions[primaryGoal] || `
+- PRIMARY GOAL DIRECTIVE (${primaryGoal}):
+  * Apply evidence-based exercise science principles tailored specifically to maximize ${primaryGoal}.`;
+
+  let secondaryBlock = '';
+  if (secondaryGoal && secondaryGoal !== 'None') {
+    let synergyRule = '';
+    if (primaryGoal === 'Muscle Hypertrophy' && secondaryGoal === 'Strength Progression') {
+      synergyRule = `POWERBUILDING SYNERGY (عضله‌سازی + قدرت): Start every workout with ONE heavy compound movement (Squat, Bench, Deadlift, OHP, or Barbell Row) programmed for 3-5 reps (RPE 8.5, 3 min rest) to build absolute strength. Follow immediately with 3-4 hypertrophy-specific accessory movements programmed for 8-12 reps with high volume (4-5 sets) to drive muscular hypertrophy.`;
+    } else if (primaryGoal === 'Strength Progression' && secondaryGoal === 'Muscle Hypertrophy') {
+      synergyRule = `STRENGTH-BASE WITH HYPERTROPHY VOLUME: Devote 65% of session volume to heavy compound strength (3-6 reps, 4-5 sets). Program remaining accessories (8-12 reps) targeting prime movers' synergists (triceps, lats, glutes) to eliminate sticking points.`;
+    } else if (primaryGoal === 'Muscle Hypertrophy' && secondaryGoal === 'Fat Loss & Definition') {
+      synergyRule = `HIGH-DENSITY LEAN HYPERTROPHY: Maintain high volume (4-5 sets per exercise, 8-12 reps) but pair accessory exercises into antagonist supersets with crisp 60-75s rest periods to elevate metabolic conditioning while preserving full myofibrillar tension.`;
+    } else if (primaryGoal === 'Muscle Hypertrophy' && (secondaryGoal === 'Joint Health & Rehabilitation' || secondaryGoal === 'Functional Fitness & Mobility')) {
+      synergyRule = `JOINT-FRIENDLY HYPERTROPHY: Train with full active range of motion and loaded stretches, but strictly eliminate high-risk spinal compression or shoulder impingement angles. Use cables, chest-supported rows, and dumbbells with 10-12 reps and controlled eccentrics.`;
+    } else {
+      synergyRule = `HYBRID INTEGRATION: Let ${primaryGoal} dictate 70% of volume and exercise selection, and use ${secondaryGoal} to shape the remaining 30% through targeted rep ranges, accessory choices, and rest period modulation.`;
+    }
+
+    secondaryBlock = `
+### SECONDARY GOAL INTEGRATION & SYNERGY:
+- Trainee Secondary Goal: ${secondaryGoal}
+- GOAL SYNERGY MANDATE:
+  * ${synergyRule}`;
+  }
+
+  return `${primaryBlock}${secondaryBlock}`;
+}
+
 export function generateAgnosticWorkoutPrompt(profile: UserProfile, lang: 'fa' | 'en' = 'fa'): string {
   // Format body metrics
   const basicInfo = [
@@ -63,6 +136,95 @@ export function generateAgnosticWorkoutPrompt(profile: UserProfile, lang: 'fa' |
     }
   }
 
+  // Calculate Volume and Session parameters mathematically
+  const isHighVolume = profile.volumePreference === 'high';
+  const isLowVolume = profile.volumePreference === 'low';
+  const days = profile.daysPerWeek;
+
+  let targetSetsPerCompound = 4;
+  let targetSetsPerIsolation = 3;
+  let targetTotalSetsPerDay = 18;
+  let targetWeeklySetsPerPriorityMuscle = 16;
+  let splitArchitecture = '';
+  let volumeRulesText = '';
+
+  if (days <= 4) {
+    // 4-Day Splits (e.g. Upper / Lower x2 or Torso / Limbs)
+    splitArchitecture = '4-Day Split (Upper A, Lower A, Rest, Upper B, Lower B, Rest, Rest)';
+    if (isHighVolume) {
+      targetSetsPerCompound = 5;
+      targetSetsPerIsolation = 4;
+      targetTotalSetsPerDay = 22; // 20 - 24 total working sets per session
+      targetWeeklySetsPerPriorityMuscle = 20; // 18 - 22 sets/week
+      volumeRulesText = `
+* 4-DAY HIGH VOLUME PROTOCOL ("تعداد ست‌های بیشتر" - MAXIMUM RECOVERABLE VOLUME):
+  - Trainee Selection: 4 DAYS PER WEEK with HIGH VOLUME ("تعداد ست‌های بیشتر").
+  - MATHEMATICAL VOLUME PRINCIPLE: Because the trainee trains only 4 days per week, EACH INDIVIDUAL SESSION MUST BE HIGH-DENSITY to accumulate optimal weekly stimulus (20 to 24 TOTAL WORKING SETS PER SESSION).
+  - MANDATORY SET COUNT PER EXERCISE:
+    • Primary / Compound movements (first 2-3 exercises of each day): MUST HAVE 4 TO 5 WORKING SETS (e.g. 5 sets of Bench Press, 4-5 sets of Rows/Squats).
+    • Secondary / Isolation movements: MUST HAVE 4 WORKING SETS (e.g. 4 sets of Lateral Raises, 4 sets of Curls).
+  - STRICT PROHIBITION AGAINST UNDER-DOSING: DO NOT output generic 2 or 3 sets for exercises! The trainee explicitly requested "High Volume / ست‌های بیشتر" on a 4-day split. Output 4 to 5 working sets on every key movement!`;
+    } else if (isLowVolume) {
+      targetSetsPerCompound = 3;
+      targetSetsPerIsolation = 2;
+      targetTotalSetsPerDay = 12; // 10 - 14 sets
+      targetWeeklySetsPerPriorityMuscle = 10;
+      volumeRulesText = `
+* 4-DAY LOW VOLUME / HIGH INTENSITY PROTOCOL:
+  - TARGET TOTAL SETS PER SESSION: 10 to 14 total working sets.
+  - SETS PER EXERCISE: 2 to 3 sets taken to near-failure (RIR 0-1).`;
+    } else {
+      targetSetsPerCompound = 4;
+      targetSetsPerIsolation = 3;
+      targetTotalSetsPerDay = 18; // 16 - 20 sets
+      targetWeeklySetsPerPriorityMuscle = 14;
+      volumeRulesText = `
+* 4-DAY BALANCED VOLUME PROTOCOL:
+  - TARGET TOTAL SETS PER SESSION: 16 to 20 total working sets.
+  - SETS PER EXERCISE: 4 sets for primary compound movements, 3-4 sets for accessories.`;
+    }
+  } else {
+    // 5-6 Day Splits (e.g. Push / Pull / Legs x2 or Arnold Split)
+    splitArchitecture = days === 6 
+      ? '6-Day Push / Pull / Legs Split (Push A, Pull A, Legs A, Push B, Pull B, Legs B, Rest)'
+      : '5-Day Split (Upper / Lower / Push / Pull / Legs)';
+    if (isHighVolume) {
+      targetSetsPerCompound = 4;
+      targetSetsPerIsolation = 3;
+      targetTotalSetsPerDay = 16; // 15 - 18 sets per session (across 6 days = 90 - 105 sets weekly!)
+      targetWeeklySetsPerPriorityMuscle = 20;
+      volumeRulesText = `
+* 6-DAY HIGH VOLUME & HIGH FREQUENCY PROTOCOL (Push/Pull/Legs x2):
+  - Trainee Selection: ${days} DAYS PER WEEK with HIGH VOLUME ("تعداد ست‌های بیشتر").
+  - MATHEMATICAL VOLUME PRINCIPLE: In a 6-day split, high weekly volume is achieved through FREQUENCY (hitting each muscle group twice weekly, every 72 hours).
+  - TARGET TOTAL SETS PER SESSION: 15 to 18 TOTAL WORKING SETS per workout (accumulating 90 to 105 total working sets per week across the 6 days!).
+  - MANDATORY SET COUNT PER EXERCISE:
+    • Primary / Compound movements: 4 WORKING SETS (e.g. 4 sets of Bench Press, 4 sets of Incline DB Press).
+    • Secondary / Isolation movements: 3 to 4 WORKING SETS (e.g. 3-4 sets of Lateral Raises, 3 sets of Triceps).
+  - SCIENTIFIC CONTRAST WITH 4-DAY: While a 4-day workout must pack 20-24 sets into one grueling session, a 6-day split spreads volume across 6 days (15-18 sets/session) to prevent overtraining the central nervous system and allow muscle protein synthesis to reset between the 2 weekly exposures.`;
+    } else if (isLowVolume) {
+      targetSetsPerCompound = 3;
+      targetSetsPerIsolation = 2;
+      targetTotalSetsPerDay = 11; // 10 - 12 sets
+      targetWeeklySetsPerPriorityMuscle = 10;
+      volumeRulesText = `
+* 6-DAY LOW VOLUME / HIGH FREQUENCY PROTOCOL:
+  - TARGET TOTAL SETS PER SESSION: 10 to 12 total working sets.
+  - SETS PER EXERCISE: 2 to 3 sets per exercise.`;
+    } else {
+      targetSetsPerCompound = 3;
+      targetSetsPerIsolation = 3;
+      targetTotalSetsPerDay = 14; // 13 - 16 sets
+      targetWeeklySetsPerPriorityMuscle = 14;
+      volumeRulesText = `
+* 6-DAY STANDARD FREQUENCY PROTOCOL:
+  - TARGET TOTAL SETS PER SESSION: 13 to 16 total working sets.
+  - SETS PER EXERCISE: 3 to 4 sets on main compound lifts, 3 sets on accessories.`;
+    }
+  }
+
+  const goalDirectives = getGoalSpecificDirectives(profile.primaryGoal, profile.secondaryGoal);
+
   // Build the complete prompt text
   return `You are an elite Exercise Science Specialist, Certified Strength and Conditioning Specialist (CSCS), and Biomechanics Expert.
 
@@ -83,6 +245,19 @@ ${profile.gymExperienceNotes ? `- Experience Background: ${profile.gymExperience
 ${profile.otherSportsExperience ? `- Other Athletic Disciplines: ${profile.otherSportsExperience}` : ''}
 ${prsList.length > 0 ? `- Established Personal Records (PRs): ${prsList.join(', ')}` : ''}
 
+### CRITICAL GOAL-DIRECTED PERIODIZATION (MANDATORY):
+${goalDirectives}
+
+### SCHEDULE & VOLUME ALLOCATION MATHEMATICS (STRICT REQUIREMENT):
+- Target Sessions Per Week: ${profile.daysPerWeek} days (${splitArchitecture})
+- Scheduled / Preferred Days: ${scheduleDays}
+- Target Session Duration: ${profile.sessionDurationMinutes} minutes
+- Trainee Volume Preference: ${profile.volumePreference.toUpperCase()} (${isHighVolume ? 'تعداد ست‌های بیشتر / High Volume' : isLowVolume ? 'ست‌های کمتر / Low Volume' : 'متوسط / Moderate'})
+- Target Intensity: ${profile.intensityPreference.toUpperCase()}
+- Rep Range Preference: ${profile.repRangePreference}
+- Default Rest Interval: ${profile.defaultRestSeconds} seconds
+${volumeRulesText}
+
 ### CRITICAL SAFETY & INJURY CONSTRAINTS:
 ${profile.hasInjuries 
   ? `- Active Limitations / Injuries: ${profile.injuryLocations.join(', ') || 'Reported'}. Details: ${profile.injuryDescription || 'Exercise caution'}`
@@ -95,16 +270,7 @@ ${profile.hasInjuries
 
 ### LOGISTICS & EQUIPMENT:
 - Available Equipment: ${equipmentString}
-- Target Sessions Per Week: ${profile.daysPerWeek} days
-- Scheduled / Preferred Days: ${scheduleDays}
-- Target Session Duration: ${profile.sessionDurationMinutes} minutes (The program volume must be realistic to complete within this timeframe)
 - Schedule Flexibility: ${profile.isScheduleFlexible ? 'Flexible days permitted' : 'Strict fixed schedule'}
-
-### PERIODIZATION & TRAINING PREFERENCES:
-- Target Volume: ${profile.volumePreference.toUpperCase()}
-- Target Intensity: ${profile.intensityPreference.toUpperCase()}
-- Rep Range Preference: ${profile.repRangePreference}
-- Default Rest Interval: ${profile.defaultRestSeconds} seconds
 - Advanced Techniques Permitted:
   * Supersets: ${profile.allowSupersets ? 'YES (use superset_group tags like "A" or "B")' : 'NO'}
   * Drop Sets: ${profile.allowDropSets ? 'YES (for final isolation sets)' : 'NO'}
@@ -113,15 +279,16 @@ ${profile.hasInjuries
 ${nutritionBlock}
 ### SCIENTIFIC EXERCISE SELECTION GUIDELINES:
 1. Exercise Sequencing: Prioritize complex multi-joint compound movements first when central nervous system fatigue is low, followed by stable machines and isolated muscular contraction.
-2. Volume Allocation: Ensure adequate weekly sets for priority muscles (${rankedMuscles}) without exceeding systemic recovery capacity (typically 10-20 weekly sets per muscle group).
+2. Volume Allocation: Ensure adequate weekly sets for priority muscles (${rankedMuscles}) - target ~${targetWeeklySetsPerPriorityMuscle} weekly sets for priority muscles without exceeding systemic recovery capacity.
 3. Equipment Compliance: ONLY prescribe movements that can be performed with the stated available equipment (${equipmentString}).
 4. Reps & RIR: Specify actionable Reps and Reps-In-Reserve (RIR usually 1-3 for compounds, 0-2 for isolations).
+5. Mathematical Volume Adherence: Each workout must contain approximately ${targetTotalSetsPerDay} total working sets, respecting the trainee's ${profile.volumePreference.toUpperCase()} volume preference!
 
 ### STRICT OUTPUT CONTRACT (NON-NEGOTIABLE):
 1. The response MUST be ONLY a single valid JSON object strictly matching schema_version "1.0".
 2. ABSOLUTELY NO MARKDOWN WRAPPER: DO NOT start with \`\`\`json or end with \`\`\`. Start immediately with { and end with }.
 3. NO PREAMBLE, NO EXPLANATION, NO PLEASANTRIES, NO APOLOGIES.
-4. "sets" MUST BE AN INTEGER (e.g. 3 or 4, NOT "3-4" or "3").
+4. "sets" MUST BE AN INTEGER (e.g. ${targetSetsPerCompound} or ${targetSetsPerIsolation}, NOT a range).
 5. "reps" MUST be an object with numeric "min" and "max" (e.g. { "min": 8, "max": 12 }) or an integer number.
 6. "rest_seconds" MUST be an integer number of seconds (e.g. 90, 120, 180).
 7. Each day MUST have a unique "day_id" (e.g. "day_1", "day_2") and each exercise a unique "exercise_id" (e.g. "ex_1_1").
@@ -138,7 +305,7 @@ ${lang === 'fa' ? `8. CRITICAL LANGUAGE REQUIREMENT FOR EXERCISE NAMES:
     "id": "program-unique-id",
     "name": "Descriptive Program Name",
     "description": "Scientific overview and rationale for this program",
-    "goal": ["Primary Goal", "Secondary Goal"],
+    "goal": ["${profile.primaryGoal}"${profile.secondaryGoal ? `, "${profile.secondaryGoal}"` : ''}],
     "duration_weeks": 8,
     "days_per_week": ${profile.daysPerWeek}
   },
@@ -163,7 +330,7 @@ ${lang === 'fa' ? `8. CRITICAL LANGUAGE REQUIREMENT FOR EXERCISE NAMES:
           "muscle_group": "Target Muscle",
           "secondary_muscles": ["Synergist 1"],
           "order": 1,
-          "sets": 3,
+          "sets": ${targetSetsPerCompound},
           "reps": { "min": 8, "max": 12 },
           "target_weight": null,
           "rir": 2,

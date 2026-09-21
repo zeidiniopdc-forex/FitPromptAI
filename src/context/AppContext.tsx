@@ -11,7 +11,7 @@ import {
   WorkoutProgramJson, 
   WorkoutSession 
 } from '../types';
-import { SAMPLE_WORKOUT_PROGRAM } from '../data/sampleProgram';
+import { SAMPLE_WORKOUT_PROGRAM, SAMPLE_6DAY_PPL_PROGRAM } from '../data/sampleProgram';
 import { INITIAL_EXERCISE_LIBRARY } from '../data/exerciseLibrary';
 import { soundService } from '../utils/sound';
 import { getExerciseName, getDayName } from '../utils/exerciseTranslation';
@@ -184,9 +184,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [programs, setPrograms] = useState<WorkoutProgramJson[]>(() => {
     try {
       const saved = localStorage.getItem(`${STORAGE_KEY_PREFIX}programs`);
-      return saved ? JSON.parse(saved) : [SAMPLE_WORKOUT_PROGRAM];
+      if (saved) {
+        const parsed: WorkoutProgramJson[] = JSON.parse(saved);
+        // Ensure both 4-day and 6-day sample programs are available if they haven't been loaded
+        const has6Day = parsed.some(p => p.program.id === SAMPLE_6DAY_PPL_PROGRAM.program.id || p.program.days_per_week === 6);
+        if (!has6Day) {
+          return [...parsed, SAMPLE_6DAY_PPL_PROGRAM];
+        }
+        return parsed;
+      }
+      return [SAMPLE_WORKOUT_PROGRAM, SAMPLE_6DAY_PPL_PROGRAM];
     } catch {
-      return [SAMPLE_WORKOUT_PROGRAM];
+      return [SAMPLE_WORKOUT_PROGRAM, SAMPLE_6DAY_PPL_PROGRAM];
     }
   });
 
