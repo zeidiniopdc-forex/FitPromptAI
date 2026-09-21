@@ -152,36 +152,39 @@ export function generateAgnosticWorkoutPrompt(profile: UserProfile, lang: 'fa' |
     // 4-Day Splits (e.g. Upper / Lower x2 or Torso / Limbs)
     splitArchitecture = '4-Day Split (Upper A, Lower A, Rest, Upper B, Lower B, Rest, Rest)';
     if (isHighVolume) {
-      targetSetsPerCompound = 5;
+      targetSetsPerCompound = 4;
       targetSetsPerIsolation = 4;
-      targetTotalSetsPerDay = 22; // 20 - 24 total working sets per session
-      targetWeeklySetsPerPriorityMuscle = 20; // 18 - 22 sets/week
+      targetTotalSetsPerDay = 22; // 20 - 24 total working sets per session across 5-6 exercises
+      targetWeeklySetsPerPriorityMuscle = 18; // 16 - 20 sets/week
       volumeRulesText = `
-* 4-DAY HIGH VOLUME PROTOCOL ("تعداد ست‌های بیشتر" - MAXIMUM RECOVERABLE VOLUME):
+* 4-DAY HIGH VOLUME PROTOCOL (SCIENTIFIC PRO BODYBUILDING COACH STANDARD):
   - Trainee Selection: 4 DAYS PER WEEK with HIGH VOLUME ("تعداد ست‌های بیشتر").
-  - MATHEMATICAL VOLUME PRINCIPLE: Because the trainee trains only 4 days per week, EACH INDIVIDUAL SESSION MUST BE HIGH-DENSITY to accumulate optimal weekly stimulus (20 to 24 TOTAL WORKING SETS PER SESSION).
-  - MANDATORY SET COUNT PER EXERCISE:
-    • Primary / Compound movements (first 2-3 exercises of each day): MUST HAVE 4 TO 5 WORKING SETS (e.g. 5 sets of Bench Press, 4-5 sets of Rows/Squats).
-    • Secondary / Isolation movements: MUST HAVE 4 WORKING SETS (e.g. 4 sets of Lateral Raises, 4 sets of Curls).
-  - STRICT PROHIBITION AGAINST UNDER-DOSING: DO NOT output generic 2 or 3 sets for exercises! The trainee explicitly requested "High Volume / ست‌های بیشتر" on a 4-day split. Output 4 to 5 working sets on every key movement!`;
+  - COACH SCIENTIFIC FOUNDATION (DR. MIKE ISRAETEL / BRAD SCHOENFELD MAV PRINCIPLES):
+    • Number of Exercises Per Session: EXACTLY 5 TO 6 EXERCISES (NEVER more than 6 exercises; pro coaches never prescribe 7+ exercises as CNS fatigue and motor unit recruitment degrade rapidly).
+    • Total Working Sets Per Session: 20 TO 22 TOTAL WORKING SETS PER WORKOUT.
+    • Per-Muscle Single-Session Ceiling: MAXIMUM 7 TO 9 WORKING SETS per muscle group per session (e.g., 2 chest exercises totaling 8 sets). Hitting each muscle twice weekly (Upper A + Upper B) yields 16 to 18 weekly sets (the scientifically proven Maximum Adaptive Volume / MAV sweet spot).
+    • Sets Per Exercise: 4 working sets on primary compound lifts, 3 to 4 working sets on secondary compound and isolation movements.
+    • STRICT AVOIDANCE OF JUNK VOLUME: No exercise should have fewer than 3 sets or more than 4-5 sets. Every set must be executed with high mechanical tension and RIR 1-2.`;
     } else if (isLowVolume) {
       targetSetsPerCompound = 3;
       targetSetsPerIsolation = 2;
       targetTotalSetsPerDay = 12; // 10 - 14 sets
       targetWeeklySetsPerPriorityMuscle = 10;
       volumeRulesText = `
-* 4-DAY LOW VOLUME / HIGH INTENSITY PROTOCOL:
+* 4-DAY LOW VOLUME / HIGH INTENSITY PROTOCOL (DORIAN YATES / HEAVY DUTY INFLUENCED):
+  - Number of Exercises: EXACTLY 4 TO 5 EXERCISES PER SESSION.
   - TARGET TOTAL SETS PER SESSION: 10 to 14 total working sets.
-  - SETS PER EXERCISE: 2 to 3 sets taken to near-failure (RIR 0-1).`;
+  - SETS PER EXERCISE: 2 to 3 sets taken to extreme proximity to failure (RIR 0-1) with maximal eccentric control.`;
     } else {
       targetSetsPerCompound = 4;
       targetSetsPerIsolation = 3;
       targetTotalSetsPerDay = 18; // 16 - 20 sets
       targetWeeklySetsPerPriorityMuscle = 14;
       volumeRulesText = `
-* 4-DAY BALANCED VOLUME PROTOCOL:
-  - TARGET TOTAL SETS PER SESSION: 16 to 20 total working sets.
-  - SETS PER EXERCISE: 4 sets for primary compound movements, 3-4 sets for accessories.`;
+* 4-DAY BALANCED VOLUME PROTOCOL (GOLD STANDARD UPPER/LOWER SPLIT):
+  - Number of Exercises: EXACTLY 5 TO 6 EXERCISES PER SESSION.
+  - TARGET TOTAL SETS PER SESSION: 16 to 20 total working sets (e.g. 5-6 exercises x 3-4 sets).
+  - Per-Muscle Session Volume: 6 to 8 working sets per muscle group per workout (12-16 weekly sets over the 2 weekly exposures).`;
     }
   } else {
     // 5-6 Day Splits (e.g. Push / Pull / Legs x2 or Arnold Split)
@@ -189,19 +192,18 @@ export function generateAgnosticWorkoutPrompt(profile: UserProfile, lang: 'fa' |
       ? '6-Day Push / Pull / Legs Split (Push A, Pull A, Legs A, Push B, Pull B, Legs B, Rest)'
       : '5-Day Split (Upper / Lower / Push / Pull / Legs)';
     if (isHighVolume) {
-      targetSetsPerCompound = 4;
+      targetSetsPerCompound = 3;
       targetSetsPerIsolation = 3;
-      targetTotalSetsPerDay = 16; // 15 - 18 sets per session (across 6 days = 90 - 105 sets weekly!)
-      targetWeeklySetsPerPriorityMuscle = 20;
+      targetTotalSetsPerDay = 16; // 15 - 18 sets per session across 5 exercises
+      targetWeeklySetsPerPriorityMuscle = 18;
       volumeRulesText = `
-* 6-DAY HIGH VOLUME & HIGH FREQUENCY PROTOCOL (Push/Pull/Legs x2):
+* 6-DAY HIGH VOLUME & HIGH FREQUENCY PROTOCOL (ELITE PUSH/PULL/LEGS x2):
   - Trainee Selection: ${days} DAYS PER WEEK with HIGH VOLUME ("تعداد ست‌های بیشتر").
-  - MATHEMATICAL VOLUME PRINCIPLE: In a 6-day split, high weekly volume is achieved through FREQUENCY (hitting each muscle group twice weekly, every 72 hours).
-  - TARGET TOTAL SETS PER SESSION: 15 to 18 TOTAL WORKING SETS per workout (accumulating 90 to 105 total working sets per week across the 6 days!).
-  - MANDATORY SET COUNT PER EXERCISE:
-    • Primary / Compound movements: 4 WORKING SETS (e.g. 4 sets of Bench Press, 4 sets of Incline DB Press).
-    • Secondary / Isolation movements: 3 to 4 WORKING SETS (e.g. 3-4 sets of Lateral Raises, 3 sets of Triceps).
-  - SCIENTIFIC CONTRAST WITH 4-DAY: While a 4-day workout must pack 20-24 sets into one grueling session, a 6-day split spreads volume across 6 days (15-18 sets/session) to prevent overtraining the central nervous system and allow muscle protein synthesis to reset between the 2 weekly exposures.`;
+  - COACH SCIENTIFIC FOUNDATION (RP VOLUME LANDMARKS & HIGH-FREQUENCY DISTRIBUTION):
+    • Number of Exercises Per Session: STRICTLY 5 EXERCISES (maximum 6). Pro coaches know that in a 6-day split, high volume is accumulated through FREQUENCY, not by exhausting a muscle with 10 exercises in one day.
+    • Total Working Sets Per Session: 15 TO 18 TOTAL WORKING SETS PER WORKOUT (yielding 90 to 108 total sets per week across the 6 days!).
+    • Sets Per Exercise: EXACTLY 3 WORKING SETS per exercise (with the primary compound primer optionally receiving 4 sets).
+    • Per-Muscle Session Ceiling: MAXIMUM 6 TO 7 WORKING SETS per muscle per workout (e.g. 2 chest exercises x 3 sets = 6 sets on Push A, and 6 sets on Push B = 12-14 sets weekly). This respects the "Junk Volume" threshold and allows complete muscle protein synthesis recovery in 72 hours.`;
     } else if (isLowVolume) {
       targetSetsPerCompound = 3;
       targetSetsPerIsolation = 2;
@@ -209,27 +211,29 @@ export function generateAgnosticWorkoutPrompt(profile: UserProfile, lang: 'fa' |
       targetWeeklySetsPerPriorityMuscle = 10;
       volumeRulesText = `
 * 6-DAY LOW VOLUME / HIGH FREQUENCY PROTOCOL:
+  - Number of Exercises: EXACTLY 4 TO 5 EXERCISES.
   - TARGET TOTAL SETS PER SESSION: 10 to 12 total working sets.
-  - SETS PER EXERCISE: 2 to 3 sets per exercise.`;
+  - SETS PER EXERCISE: 2 to 3 sets per exercise with RIR 1.`;
     } else {
       targetSetsPerCompound = 3;
       targetSetsPerIsolation = 3;
-      targetTotalSetsPerDay = 14; // 13 - 16 sets
+      targetTotalSetsPerDay = 15; // 14 - 16 sets
       targetWeeklySetsPerPriorityMuscle = 14;
       volumeRulesText = `
-* 6-DAY STANDARD FREQUENCY PROTOCOL:
-  - TARGET TOTAL SETS PER SESSION: 13 to 16 total working sets.
-  - SETS PER EXERCISE: 3 to 4 sets on main compound lifts, 3 sets on accessories.`;
+* 6-DAY STANDARD FREQUENCY PROTOCOL (PPL x2):
+  - Number of Exercises: EXACTLY 5 EXERCISES PER SESSION.
+  - TARGET TOTAL SETS PER SESSION: 14 to 16 total working sets.
+  - SETS PER EXERCISE: 3 working sets per exercise (3 sets on compounds, 3 sets on accessories).`;
     }
   }
 
   const goalDirectives = getGoalSpecificDirectives(profile.primaryGoal, profile.secondaryGoal);
 
   // Build the complete prompt text
-  return `You are an elite Exercise Science Specialist, Certified Strength and Conditioning Specialist (CSCS), and Biomechanics Expert.
+  return `You are a World-Class Exercise Science Specialist, Olympic Strength & Conditioning Specialist (CSCS), and Pro Bodybuilding Coach. You operate under the strict scientific volume landmarks and evidence-based hypertrophy frameworks established by Dr. Mike Israetel (Renaissance Periodization), Dr. Brad Schoenfeld, and Eric Helms.
 
 ### TASK:
-Design a scientifically periodized, high-yield, hyper-personalized workout program adhering STRICTLY to the trainee's profile, constraints, and biomechanics.
+Design a scientifically periodized, high-yield, hyper-personalized workout program adhering STRICTLY to the trainee's profile, constraints, biomechanics, and elite exercise science principles.
 
 prompt_version: ${PROMPT_VERSION}
 
@@ -277,12 +281,26 @@ ${profile.hasInjuries
   * Rest-Pause Sets: ${profile.allowRestPause ? 'YES (where appropriate)' : 'NO'}
   * Proximity to Failure: ${profile.trainingToFailure.toUpperCase()}
 ${nutritionBlock}
-### SCIENTIFIC EXERCISE SELECTION GUIDELINES:
-1. Exercise Sequencing: Prioritize complex multi-joint compound movements first when central nervous system fatigue is low, followed by stable machines and isolated muscular contraction.
-2. Volume Allocation: Ensure adequate weekly sets for priority muscles (${rankedMuscles}) - target ~${targetWeeklySetsPerPriorityMuscle} weekly sets for priority muscles without exceeding systemic recovery capacity.
-3. Equipment Compliance: ONLY prescribe movements that can be performed with the stated available equipment (${equipmentString}).
-4. Reps & RIR: Specify actionable Reps and Reps-In-Reserve (RIR usually 1-3 for compounds, 0-2 for isolations).
-5. Mathematical Volume Adherence: Each workout must contain approximately ${targetTotalSetsPerDay} total working sets, respecting the trainee's ${profile.volumePreference.toUpperCase()} volume preference!
+### SCIENTIFIC EXERCISE SELECTION & VOLUME GUIDELINES (ELITE COACH MANDATE):
+1. STRICT SESSION EXERCISE COUNT (4 TO 6 EXERCISES MAX):
+   - Every workout session MUST contain EXACTLY 4 TO 6 EXERCISES (never fewer than 4, never more than 6).
+   - Scientific reason: Neuromuscular efficiency, central drive, and motor unit recruitment decline steeply after 5-6 exercises. Professional bodybuilders train with maximum mechanical tension on 5-6 movements rather than accumulating fatigue over 8-10 diluted exercises.
+2. PER-MUSCLE SESSION VOLUME CEILING (THE "JUNK VOLUME" RULE):
+   - NEVER exceed 6 to 10 working sets for any single muscle group within a single session.
+   - Any volume beyond 8-10 sets for the same muscle in one workout is physiologically confirmed to be "junk volume" (flatlined hypertrophic stimulus accompanied by disproportionate muscle damage and prolonged recovery).
+   - Hypertrophy is maximized by distributing weekly volume (12-20 sets) across 2 exposures per week (e.g. 7 sets Chest on Upper A + 7 sets Chest on Upper B = 14 weekly sets - optimal MAV!).
+3. MOVEMENT TIER HIERARCHY & EXERCISE SEQUENCING:
+   - Tier 1 (Exercise 1): Heavy multi-joint compound primer (Squat, Bench Press, Barbell Row, Deadlift/RDL, OHP) - 3-4 working sets, 6-8 reps, RIR 2, 2-3 min rest, 3-0-1-0 tempo.
+   - Tier 2 (Exercise 2): Complementary compound or high-stability machine/dumbbell movement - 3-4 working sets, 8-10 reps, RIR 1-2, 90-120s rest.
+   - Tier 3 (Exercise 3): Stretch-mediated isolation targeting the lengthened position (e.g. Incline DB Curl, Romanian Deadlift, Cable Fly, Overhead Cable Triceps) - 3 working sets, 10-12 reps, RIR 1, 75-90s rest, 1s loaded stretch.
+   - Tier 4 (Exercises 4-6): Metabolic stress & weak-point synergists (lateral delts, arms, calves, core) - 3-4 working sets, 12-15 reps (15-20 for calves), RIR 0-1, 60s rest, 1s peak contraction squeeze.
+4. PROXIMITY TO FAILURE (RIR PRECISION):
+   - Heavy axial spinal compound movements: RIR 1-2 (RPE 8-8.5). NEVER train heavy spinal loads to true failure (RIR 0) to eliminate injury risk.
+   - Stable machine and cable isolations: RIR 0-1 (RPE 9-9.5) to recruit all high-threshold motor units safely.
+5. TEMPO SPECIFICATION:
+   - Every exercise must prescribe a controlled eccentric (negative) tempo of 2 to 3 seconds (e.g. "3-0-1-0" or "2-0-1-1") to maximize mechanical tension.
+6. VOLUME ALLOCATION:
+   - Each workout must contain approximately ${targetTotalSetsPerDay} total working sets, respecting the trainee's ${profile.volumePreference.toUpperCase()} volume preference!
 
 ### STRICT OUTPUT CONTRACT (NON-NEGOTIABLE):
 1. The response MUST be ONLY a single valid JSON object strictly matching schema_version "1.0".

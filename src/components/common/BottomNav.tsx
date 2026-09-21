@@ -43,7 +43,10 @@ export const BottomNav: React.FC<BottomNavProps> = ({ currentTab, onSelectTab })
             <button
               key={tab.id}
               id={`nav-tab-${tab.id}`}
-              onClick={() => onSelectTab(tab.id)}
+              onClick={() => {
+                onSelectTab(tab.id);
+                window.scrollTo({ top: 0, behavior: 'instant' });
+              }}
               className={`relative flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition-all duration-150 min-w-[54px] ${
                 isActive
                   ? 'text-emerald-500 font-semibold'

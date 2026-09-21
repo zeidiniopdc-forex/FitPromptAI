@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { t } from '../../utils/translations';
 import { LoggedExercise, LoggedSet, WorkoutSession } from '../../types';
@@ -53,6 +53,11 @@ export const ActiveWorkoutTracker: React.FC<ActiveWorkoutTrackerProps> = ({
   const [workoutRating, setWorkoutRating] = useState<number>(5);
   const [showFinishConfirm, setShowFinishConfirm] = useState<boolean>(false);
   const [showDiscardConfirm, setShowDiscardConfirm] = useState<boolean>(false);
+
+  // Scroll to top immediately when active workout tracker mounts to guarantee first exercise is 100% visible
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }, [activeSession?.dayId]);
 
   // If no active session, show quick-start selector for active program days
   if (!activeSession) {
@@ -159,7 +164,7 @@ export const ActiveWorkoutTracker: React.FC<ActiveWorkoutTrackerProps> = ({
           setTimeout(() => {
             const nextExCard = document.getElementById(`exercise-card-${exIdx + 1}`);
             if (nextExCard) {
-              nextExCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              nextExCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
               nextExCard.classList.add('ring-2', 'ring-emerald-500/50');
               setTimeout(() => {
                 nextExCard.classList.remove('ring-2', 'ring-emerald-500/50');
@@ -170,7 +175,7 @@ export const ActiveWorkoutTracker: React.FC<ActiveWorkoutTrackerProps> = ({
           // Last set of the entire workout! Scroll to finish button
           setTimeout(() => {
             const finishBtn = document.getElementById('btn-finish-session-modal-open');
-            finishBtn?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            finishBtn?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
           }, 150);
         }
       }
@@ -198,8 +203,8 @@ export const ActiveWorkoutTracker: React.FC<ActiveWorkoutTrackerProps> = ({
 
   return (
     <div className="w-full max-w-4xl mx-auto px-3 sm:px-4 py-4 pb-32 overflow-x-hidden">
-      {/* Top Session Status Bar */}
-      <div className="sticky top-14 z-30 bg-zinc-950/95 backdrop-blur-md border border-zinc-800/80 rounded-2xl px-3.5 sm:px-4 py-3 mb-4 flex items-center justify-between gap-2 shadow-md w-full">
+      {/* Top Session Status Bar (Relative flow prevents obscuring the first exercise) */}
+      <div className="relative bg-zinc-900/90 border border-zinc-800/80 rounded-2xl px-3.5 sm:px-4 py-3.5 mb-5 flex items-center justify-between gap-2 shadow-md w-full">
         <div>
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
@@ -245,7 +250,7 @@ export const ActiveWorkoutTracker: React.FC<ActiveWorkoutTrackerProps> = ({
             <div
               id={`exercise-card-${exIdx}`}
               key={exercise.exerciseId || exIdx}
-              className={`border rounded-2xl overflow-hidden transition-all ${
+              className={`scroll-mt-24 sm:scroll-mt-28 border rounded-2xl overflow-hidden transition-all ${
                 completedInThisEx === exercise.sets.length && exercise.sets.length > 0
                   ? 'bg-zinc-900/40 border-emerald-500/30'
                   : 'bg-zinc-900 border-zinc-800'
@@ -305,7 +310,7 @@ export const ActiveWorkoutTracker: React.FC<ActiveWorkoutTrackerProps> = ({
                       <div
                         id={`set-row-${exIdx}-${setIdx}`}
                         key={setIdx}
-                        className={`p-2.5 sm:p-3 rounded-xl border transition-all ${
+                        className={`scroll-mt-24 sm:scroll-mt-28 p-2.5 sm:p-3 rounded-xl border transition-all ${
                           set.isCompleted
                             ? 'bg-emerald-950/20 border-emerald-500/40'
                             : 'bg-zinc-950 border-zinc-800'
@@ -462,14 +467,25 @@ export const ActiveWorkoutTracker: React.FC<ActiveWorkoutTrackerProps> = ({
         })}
       </div>
 
-      {/* Discard Session Link */}
-      <div className="mt-8 text-center">
+      {/* Bottom Session Action Controls */}
+      <div className="mt-8 pt-6 border-t border-zinc-800/80 flex flex-col sm:flex-row items-center justify-between gap-4">
         <button
           onClick={() => setShowDiscardConfirm(true)}
-          className="text-xs text-zinc-500 hover:text-rose-400 transition-colors flex items-center gap-1 mx-auto"
+          className="text-xs text-zinc-500 hover:text-rose-400 transition-colors flex items-center gap-1.5 order-2 sm:order-1"
         >
           <Trash2 className="w-3.5 h-3.5" />
           <span>{lang === 'fa' ? 'انصراف و حذف این جلسه تمرینی' : 'Discard Workout Session'}</span>
+        </button>
+
+        <button
+          id="btn-finish-session-bottom"
+          onClick={() => setShowFinishConfirm(true)}
+          className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-black text-sm shadow-lg shadow-emerald-500/25 transition-all active:scale-95 order-1 sm:order-2"
+        >
+          <CheckCircle2 className="w-4 h-4" />
+          <span>
+            {labels.finishWorkout} ({completedSetsCount} / {totalSetsCount} {labels.totalSets})
+          </span>
         </button>
       </div>
 

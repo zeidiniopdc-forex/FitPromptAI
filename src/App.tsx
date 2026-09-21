@@ -32,6 +32,7 @@ const MainLayout: React.FC = () => {
   const handleStartWorkout = (dayId: string) => {
     startWorkoutSession(dayId);
     setCurrentTab('workout');
+    window.scrollTo({ top: 0, behavior: 'instant' });
   };
 
   const handleSessionFinished = (session: WorkoutSession) => {
