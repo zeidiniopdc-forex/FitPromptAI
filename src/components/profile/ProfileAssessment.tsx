@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useApp, DEFAULT_USER_PROFILE } from '../../context/AppContext';
 import { t } from '../../utils/translations';
 import { MuscleGroup, UserProfile } from '../../types';
+import { getMuscleGroupName, getEquipmentName } from '../../utils/exerciseTranslation';
 import { 
   User, 
   Target, 
@@ -97,7 +98,7 @@ export const ProfileAssessment: React.FC<ProfileAssessmentProps> = ({
 
   const weekdaysList = [
     { en: 'Saturday', fa: 'شنبه' },
-    { en: 'Sunday', fa: 'یکشنبه' },
+    { en: 'Sunday', fa: 'یک‌شنبه' },
     { en: 'Monday', fa: 'دوشنبه' },
     { en: 'Tuesday', fa: 'سه‌شنبه' },
     { en: 'Wednesday', fa: 'چهارشنبه' },
@@ -483,7 +484,7 @@ export const ProfileAssessment: React.FC<ProfileAssessmentProps> = ({
                       <span className="w-5 h-5 rounded-full bg-zinc-800 text-zinc-300 text-[11px] font-bold flex items-center justify-center">
                         {idx + 1}
                       </span>
-                      <span className="text-sm font-semibold text-zinc-100">{muscle}</span>
+                      <span className="text-sm font-semibold text-zinc-100">{getMuscleGroupName(muscle, 'fa')}</span>
                     </div>
 
                     <div className="flex items-center gap-1">
@@ -582,7 +583,7 @@ export const ProfileAssessment: React.FC<ProfileAssessmentProps> = ({
               </h4>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <div>
-                  <label className="block text-[11px] text-zinc-400 mb-1">Bench Press</label>
+                  <label className="block text-[11px] text-zinc-400 mb-1">{lang === 'fa' ? 'پرس سینه هالتر' : 'Bench Press'}</label>
                   <input
                     type="number"
                     value={formData.knownPRs?.benchPressKg || ''}
@@ -595,7 +596,7 @@ export const ProfileAssessment: React.FC<ProfileAssessmentProps> = ({
                   />
                 </div>
                 <div>
-                  <label className="block text-[11px] text-zinc-400 mb-1">Back Squat</label>
+                  <label className="block text-[11px] text-zinc-400 mb-1">{lang === 'fa' ? 'اسکات از پشت با هالتر' : 'Back Squat'}</label>
                   <input
                     type="number"
                     value={formData.knownPRs?.squatKg || ''}
@@ -608,7 +609,7 @@ export const ProfileAssessment: React.FC<ProfileAssessmentProps> = ({
                   />
                 </div>
                 <div>
-                  <label className="block text-[11px] text-zinc-400 mb-1">Deadlift</label>
+                  <label className="block text-[11px] text-zinc-400 mb-1">{lang === 'fa' ? 'ددلیفت هالتر' : 'Deadlift'}</label>
                   <input
                     type="number"
                     value={formData.knownPRs?.deadliftKg || ''}
@@ -621,7 +622,7 @@ export const ProfileAssessment: React.FC<ProfileAssessmentProps> = ({
                   />
                 </div>
                 <div>
-                  <label className="block text-[11px] text-zinc-400 mb-1">Overhead Press</label>
+                  <label className="block text-[11px] text-zinc-400 mb-1">{lang === 'fa' ? 'پرس سرشانه هالتر (OHP)' : 'Overhead Press'}</label>
                   <input
                     type="number"
                     value={formData.knownPRs?.overheadPressKg || ''}
@@ -830,7 +831,7 @@ export const ProfileAssessment: React.FC<ProfileAssessmentProps> = ({
                         : 'bg-zinc-950 border-zinc-800 text-zinc-300 hover:border-zinc-700'
                     }`}
                   >
-                    <span>{equip}</span>
+                    <span>{lang === 'fa' ? getEquipmentName(equip, 'fa') : equip}</span>
                     <span className={`w-4 h-4 rounded flex items-center justify-center border ${
                       isSelected ? 'bg-emerald-500 border-emerald-400 text-zinc-950' : 'border-zinc-700'
                     }`}>

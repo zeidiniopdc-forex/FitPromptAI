@@ -1,4 +1,5 @@
 import { UserProfile } from '../types';
+import { normalizeDayString, WEEKDAYS_PERSIAN_ORDER } from './weekday';
 
 export const PROMPT_VERSION = "2.0";
 
@@ -121,26 +122,41 @@ export function generateAgnosticWorkoutPrompt(profile: UserProfile, lang: 'fa' |
   if (profile.knownPRs?.deadliftKg) prsList.push(`Deadlift 1RM: ${profile.knownPRs.deadliftKg}kg`);
   if (profile.knownPRs?.overheadPressKg) prsList.push(`OHP 1RM: ${profile.knownPRs.overheadPressKg}kg`);
 
-  // Preferred days mapping
-  const preferredDaysList = profile.preferredDays && profile.preferredDays.length > 0
-    ? profile.preferredDays
-    : ['Saturday', 'Sunday', 'Tuesday', 'Wednesday'].slice(0, profile.daysPerWeek);
+  // Preferred days mapping strictly adhering to Iranian calendar (Week starts Saturday = روز اول شنبه)
+  const defaultIranianDays = profile.daysPerWeek === 6
+    ? ['شنبه', 'یک‌شنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنج‌شنبه']
+    : profile.daysPerWeek === 5
+    ? ['شنبه', 'یک‌شنبه', 'دوشنبه', 'چهارشنبه', 'پنج‌شنبه']
+    : profile.daysPerWeek === 4
+    ? ['شنبه', 'یک‌شنبه', 'سه‌شنبه', 'چهارشنبه']
+    : ['شنبه', 'دوشنبه', 'چهارشنبه'];
 
-  const scheduleDays = preferredDaysList.join(', ');
+  const rawPreferred = profile.preferredDays && profile.preferredDays.length > 0
+    ? profile.preferredDays
+    : defaultIranianDays;
+
+  // Normalize all preferred days to Persian Iranian calendar names
+  const preferredDaysList = rawPreferred.map(d => {
+    const norm = normalizeDayString(d);
+    const found = WEEKDAYS_PERSIAN_ORDER.find(w => w.id === norm);
+    return found ? found.nameFa : d;
+  });
+
+  const scheduleDays = preferredDaysList.join('، ');
 
   // Nutrition context if provided
   let nutritionBlock = '';
   if (profile.nutrition) {
     const nutParts: string[] = [];
-    if (profile.nutrition.approximateCalories) nutParts.push(`Approx Calories: ${profile.nutrition.approximateCalories} kcal`);
-    if (profile.nutrition.proteinGrams) nutParts.push(`Daily Protein: ${profile.nutrition.proteinGrams}g`);
-    if (profile.nutrition.dietType) nutParts.push(`Diet Strategy: ${profile.nutrition.dietType}`);
-    if (profile.nutrition.dailyMealsCount) nutParts.push(`Meals/Day: ${profile.nutrition.dailyMealsCount}`);
+    if (profile.nutrition.approximateCalories) nutParts.push(`کالری روزانه تقریبی: ${profile.nutrition.approximateCalories} کیلوکالری`);
+    if (profile.nutrition.proteinGrams) nutParts.push(`پروتئین روزانه: ${profile.nutrition.proteinGrams} گرم`);
+    if (profile.nutrition.dietType) nutParts.push(`استراتژی تغذیه: ${profile.nutrition.dietType}`);
+    if (profile.nutrition.dailyMealsCount) nutParts.push(`تعداد وعده‌ها: ${profile.nutrition.dailyMealsCount} وعده`);
     if (profile.nutrition.supplements && profile.nutrition.supplements.length > 0) {
-      nutParts.push(`Supplements: ${profile.nutrition.supplements.join(', ')}`);
+      nutParts.push(`مکمل‌های مصرفی: ${profile.nutrition.supplements.join('، ')}`);
     }
     if (nutParts.length > 0) {
-      nutritionBlock = `\n### NUTRITIONAL CONTEXT (Context only - no medical advice required):\n- ${nutParts.join('\n- ')}\n`;
+      nutritionBlock = `\n### اطلاعات وضعیت تغذیه و مکمل‌ها (زمینه تخصصی برای تناسب حجم تمرین):\n- ${nutParts.join('\n- ')}\n`;
     }
   }
 
@@ -157,80 +173,92 @@ export function generateAgnosticWorkoutPrompt(profile: UserProfile, lang: 'fa' |
 
   if (days <= 4) {
     // 4-Day Splits (e.g. Upper / Lower x2)
-    splitArchitecture = '4-Day Upper / Lower Split (Upper A, Lower A, Rest, Upper B, Lower B, Rest, Rest)';
+    splitArchitecture = 'تقسیم‌بندی ۴ روزه بالاتنه / پایین‌تنه (شنبه: بالاتنه A، یک‌شنبه: پایین‌تنه A، سه‌شنبه: بالاتنه B، چهارشنبه: پایین‌تنه B)';
     if (isHighVolume) {
       targetSetsPerCompound = 4;
       targetSetsPerIsolation = 4;
       targetTotalSetsPerDay = 22; // 20 - 22 total working sets per session across 5-6 exercises
       volumeRulesText = `
-* 4-DAY HIGH VOLUME PROTOCOL (SCIENTIFIC PRO BODYBUILDING COACH STANDARD):
-  - Trainee Selection: 4 DAYS PER WEEK with HIGH VOLUME ("تعداد ست‌های بیشتر").
-  - COACH SCIENTIFIC FOUNDATION (DR. MIKE ISRAETEL / BRAD SCHOENFELD MAV PRINCIPLES):
-    • Number of Exercises Per Session: EXACTLY 5 TO 6 EXERCISES (NEVER more than 6 exercises; pro coaches never prescribe 7+ exercises as CNS fatigue and motor unit recruitment degrade rapidly).
-    • Total Working Sets Per Session: 20 TO 22 TOTAL WORKING SETS PER WORKOUT.
-    • Per-Muscle Single-Session Ceiling: MAXIMUM 7 TO 9 WORKING SETS per muscle group per session (e.g., 2 chest exercises totaling 8 sets). Hitting each muscle twice weekly (Upper A + Upper B) yields 16 to 18 weekly sets (the scientifically proven Maximum Adaptive Volume / MAV sweet spot).
-    • Sets Per Exercise: 4 working sets on primary compound lifts, 3 to 4 working sets on secondary compound and isolation movements.
-    • STRICT AVOIDANCE OF JUNK VOLUME: No exercise should have fewer than 3 sets or more than 4-5 sets. Every set must be executed with high mechanical tension and RIR 1-2.`;
+* پروتکل حجم بالای ۴ روزه (استاندارد مربیگری حرفه‌ای بدنسازی علمی - Brad Schoenfeld & Mike Israetel):
+  - هدف: حداکثر هایپرتروفی برای ۴ روز تمرین در هفته با تأکید بر ست‌های باکیفیت.
+  - تعداد حرکات در هر جلسه: دقیقاً ۵ تا ۶ حرکت (هرگز بیشتر از ۶ حرکت تجویز نشود تا خستگی سیستم عصبی مرکزی مانع کیفیت نشود).
+  - مجموع ست‌های اصلی هر جلسه: ۲۰ تا ۲۲ ست کاری پرفشار.
+  - سقف حجم هر عضله در هر جلسه: حداکثر ۷ تا ۹ ست کاری (رسیدن به ۱۶ تا ۱۸ ست هفتگی در دو جلسه).
+  - ست‌های هر حرکت: ۴ ست کاری برای حرکات چندمفصلی پایه، ۳ تا ۴ ست برای تک‌مفصلی‌ها.`;
     } else if (isLowVolume) {
       targetSetsPerCompound = 3;
       targetSetsPerIsolation = 2;
       targetTotalSetsPerDay = 12; // 10 - 14 sets
       volumeRulesText = `
-* 4-DAY LOW VOLUME / HIGH INTENSITY PROTOCOL (DORIAN YATES / HEAVY DUTY INFLUENCED):
-  - Number of Exercises: EXACTLY 4 TO 5 EXERCISES PER SESSION.
-  - TARGET TOTAL SETS PER SESSION: 10 to 14 total working sets.
-  - SETS PER EXERCISE: 2 to 3 sets taken to extreme proximity to failure (RIR 0-1) with maximal eccentric control.`;
+* پروتکل شدت بالا / حجم کم ۴ روزه (High Intensity / Low Volume):
+  - تعداد حرکات: دقیقاً ۴ تا ۵ حرکت در هر جلسه.
+  - مجموع ست‌های اصلی هر جلسه: ۱۰ تا ۱۴ ست کاری با حداکثر نزدیکی به ناتوانی (RIR 0-1).`;
     } else {
       targetSetsPerCompound = 4;
       targetSetsPerIsolation = 3;
       targetTotalSetsPerDay = 18; // 16 - 20 sets
       volumeRulesText = `
-* 4-DAY BALANCED VOLUME PROTOCOL (GOLD STANDARD UPPER/LOWER SPLIT):
-  - Number of Exercises: EXACTLY 5 TO 6 EXERCISES PER SESSION.
-  - TARGET TOTAL SETS PER SESSION: 16 to 20 total working sets (e.g. 5-6 exercises x 3-4 sets).
-  - Per-Muscle Session Volume: 6 to 8 working sets per muscle group per workout (12-16 weekly sets over the 2 weekly exposures).`;
+* پروتکل حجم متعادل ۴ روزه (استاندارد طلایی بالاتنه/پایین‌تنه):
+  - تعداد حرکات: دقیقاً ۵ تا ۶ حرکت در هر جلسه.
+  - مجموع ست‌های اصلی هر جلسه: ۱۶ تا ۲۰ ست کاری.
+  - حجم هر عضله در هر جلسه: ۶ تا ۸ ست کاری (۱۲ تا ۱۶ ست هفتگی در مجموع دو جلسه).`;
     }
   } else {
-    // 5-6 Day Splits (e.g. Push / Pull / Legs x2 or Arnold Split)
+    // 5-6 Day Splits (e.g. Push / Pull / Legs x2)
     splitArchitecture = days === 6 
-      ? '6-Day Push / Pull / Legs Split (Push A, Pull A, Legs A, Push B, Pull B, Legs B, Rest)'
-      : '5-Day Split (Upper / Lower / Push / Pull / Legs)';
+      ? 'تقسیم‌بندی ۶ روزه Push / Pull / Legs (شنبه: پوش A، یک‌شنبه: پول A، دوشنبه: پا A، سه‌شنبه: پوش B، چهارشنبه: پول B، پنج‌شنبه: پا B، جمعه: استراحت)'
+      : 'تقسیم‌بندی ۵ روزه تخصصی (شنبه: بالاتنه A، یک‌شنبه: پایین‌تنه A، دوشنبه: پوش، چهارشنبه: پول، پنج‌شنبه: پا)';
     if (isHighVolume) {
       targetSetsPerCompound = 3;
       targetSetsPerIsolation = 3;
       targetTotalSetsPerDay = 16; // 15 - 18 sets per session across 5 exercises
       volumeRulesText = `
-* 6-DAY HIGH VOLUME & HIGH FREQUENCY PROTOCOL (ELITE PUSH/PULL/LEGS x2):
-  - Trainee Selection: ${days} DAYS PER WEEK with HIGH VOLUME ("تعداد ست‌های بیشتر").
-  - COACH SCIENTIFIC FOUNDATION (RP VOLUME LANDMARKS & HIGH-FREQUENCY DISTRIBUTION):
-    • Number of Exercises Per Session: STRICTLY 5 EXERCISES (maximum 6). Pro coaches know that in a 6-day split, high volume is accumulated through FREQUENCY, not by exhausting a muscle with 10 exercises in one day.
-    • Total Working Sets Per Session: 15 TO 18 TOTAL WORKING SETS PER WORKOUT (yielding 90 to 108 total sets per week across the 6 days!).
-    • Sets Per Exercise: EXACTLY 3 WORKING SETS per exercise (with the primary compound primer optionally receiving 4 sets).
-    • Per-Muscle Session Ceiling: MAXIMUM 6 TO 7 WORKING SETS per muscle per workout (e.g. 2 chest exercises x 3 sets = 6 sets on Push A, and 6 sets on Push B = 12-14 sets weekly). This respects the "Junk Volume" threshold and allows complete muscle protein synthesis recovery in 72 hours.`;
+* پروتکل ۶ روزه فرکانس و حجم بالا (Push / Pull / Legs x2):
+  - تعداد روزهای تمرین: ۶ روز در هفته در تقویم رسمی ایران (شنبه تا پنج‌شنبه، جمعه استراحت).
+  - تعداد حرکات در هر جلسه: دقیقاً ۵ حرکت (حداکثر ۶ حرکت). در اسپلیت ۶ روزه، حجم بالا از طریق فرکانس ۲ بار در هفته تأمین می‌شود نه بمباران بی‌رویه در یک روز.
+  - مجموع ست‌های اصلی هر جلسه: ۱۵ تا ۱۸ ست کاری در هر جلسه (مجموعاً ۹۰ تا ۱۰۵ ست در کل هفته).
+  - ست‌های هر حرکت: ۳ ست کاری پرفشار (حرکت اول چندمفصلی می‌تواند ۴ ست باشد).
+  - سقف حجم هر عضله در هر جلسه: ۶ تا ۷ ست کاری، که با ۲ بار تکرار در هفته به ۱۲ تا ۱۴ ست بهینه می‌رسد.`;
     } else if (isLowVolume) {
       targetSetsPerCompound = 3;
       targetSetsPerIsolation = 2;
       targetTotalSetsPerDay = 11; // 10 - 12 sets
       volumeRulesText = `
-* 6-DAY LOW VOLUME / HIGH FREQUENCY PROTOCOL:
-  - Number of Exercises: EXACTLY 4 TO 5 EXERCISES.
-  - TARGET TOTAL SETS PER SESSION: 10 to 12 total working sets.
-  - SETS PER EXERCISE: 2 to 3 sets per exercise with RIR 1.`;
+* پروتکل ۶ روزه با حجم کمتر و شدت بالا:
+  - تعداد حرکات: ۴ تا ۵ حرکت در هر جلسه.
+  - مجموع ست‌های هر جلسه: ۱۰ تا ۱۲ ست کاری با تمرکز بر RIR 1 و کنترل منفی حرکت.`;
     } else {
       targetSetsPerCompound = 3;
       targetSetsPerIsolation = 3;
       targetTotalSetsPerDay = 15; // 14 - 16 sets
       volumeRulesText = `
-* 6-DAY STANDARD FREQUENCY PROTOCOL (PPL x2):
-  - Number of Exercises: EXACTLY 5 EXERCISES PER SESSION.
-  - TARGET TOTAL SETS PER SESSION: 14 to 16 total working sets.
-  - SETS PER EXERCISE: 3 working sets per exercise (3 sets on compounds, 3 sets on accessories).`;
+* پروتکل استاندارد ۶ روزه علمی (PPL x2):
+  - شنبه: پوش A (تمرکز سینه، بخش قدامی سرشانه و پشت‌بازو)
+  - یک‌شنبه: پول A (تمرکز زیربغل، لت‌ها، کول و جلوبازو)
+  - دوشنبه: پا A (تمرکز چهارسر ران، ساق و شکم - روز سوم هفته در ایران)
+  - سه‌شنبه: پوش B (تمرکز بالای سینه، نشر جانب سرشانه و پشت‌بازو)
+  - چهارشنبه: پول B (تمرکز ضخامت زیربغل، فیله، کول و جلوبازو - روز پنجم هفته)
+  - پنج‌شنبه: پا B (تمرکز همسترینگ، باسن و ساق - روز ششم هفته)
+  - جمعه: استراحت کامل و ریکاوری هفتگی
+  - تعداد حرکات هر جلسه: ۵ حرکت با ۳ ست کاری برای هر حرکت.`;
     }
   }
 
   // Generate explicit day-by-day mapping schedule requirements for the prompt
   const explicitDaySchedulePlan = preferredDaysList.map((dayName, idx) => {
-    return `   * Day ${idx + 1}: day_id: "day_${idx + 1}", weekday MUST BE EXACTLY "${dayName}"`;
+    let dayRole = '';
+    if (days === 6) {
+      const roles = [
+        'پوش A (Push A: سینه، سرشانه، پشت‌بازو)',
+        'پول A (Pull A: زیربغل، کول، جلوبازو)',
+        'پا A (Legs A: چهارسر ران، ساق، شکم)',
+        'پوش B (Push B: بالای سینه، سرشانه، پشت‌بازو)',
+        'پول B (Pull B: ضخامت زیربغل، فیله، جلوبازو)',
+        'پا B (Legs B: همسترینگ، باسن، ساق)'
+      ];
+      dayRole = roles[idx] || `جلسه ${idx + 1}`;
+    }
+    return `   * جلسه ${idx + 1}: day_id: "day_${idx + 1}"، ویژگی weekday حتماً و دقیقاً باید "${dayName}" باشد (محتوا: ${dayRole || `جلسه اختصاصی روز ${dayName}`})`;
   }).join('\n');
 
   // Working weight estimation guide based on trainee's personal stats
@@ -338,29 +366,33 @@ ${volumeRulesText}
 5. "reps" MUST be an object with numeric "min" and "max" (e.g. { "min": 8, "max": 12 }) or an integer number.
 6. "rest_seconds" MUST be an integer number of seconds (e.g. 90, 120, 180).
 7. "target_weight" MUST be a realistic calculated number in kg (e.g. ${estimatedBenchWorkingKg}, ${Math.round(estimatedBenchWorkingKg * 0.38)}, ${estimatedSquatWorkingKg}), NOT null (except for pure bodyweight movements like chin-ups).
-8. The JSON MUST include the "personalization_audit" block inside "program" detailing how this program was custom-tailored for ${profile.name || 'this trainee'}.
-${lang === 'fa' ? `9. CRITICAL PERSIAN LANGUAGE REQUIREMENT:
-   - The user trains in PERSIAN (فارسی).
-   - "name" for EVERY exercise MUST be in professional Persian (e.g. "پرس سینه هالتر", "اسکات از پشت با هالتر", "زیربغل دمبل تک خم", "نشر جانب دمبل", "پشت بازو سیم‌کش"). English name in parentheses is recommended, e.g. "پرس سینه هالتر (Bench Press)".
-   - Day names ("name") should be in Persian (e.g. "بالاتنه A (تمرکز سینه و زیربغل)").
-   - "notes" and "description" should be provided in natural, motivating Persian so the trainee can read elite coaching cues easily during the workout.` : ''}
+8. The JSON MUST include the "personalization_audit" block inside "program" detailing how this program was custom-tailored specifically for ${profile.name || 'this trainee'}.
+9. CRITICAL IRANIAN CALENDAR & PERSIAN LANGUAGE RULES:
+   - The application is NATIVE FOR IRAN with the week starting strictly on SATURDAY (شنبه = اول هفته).
+   - In Iran: Saturday (شنبه = روز ۱), Sunday (یک‌شنبه = روز ۲), Monday (دوشنبه = روز ۳), Tuesday (سه‌شنبه = روز ۴), Wednesday (چهارشنبه = روز ۵), Thursday (پنج‌شنبه = روز ۶), Friday (جمعه = استراحت).
+   - The "weekday" property for each day MUST be in Persian matching Iranian weekdays: "شنبه", "یک‌شنبه", "دوشنبه", "سه‌شنبه", "چهارشنبه", "پنج‌شنبه".
+   - In a 6-day program: Day 1 is Push A (شنبه), Day 2 is Pull A (یک‌شنبه), Day 3 is Legs A (دوشنبه), Day 4 is Push B (سه‌شنبه), Day 5 is Pull B (چهارشنبه), Day 6 is Legs B (پنج‌شنبه).
+   - "name" and "name_fa" for EVERY exercise and day MUST be in standard professional Persian bodybuilding terminology (e.g. "پرس سینه هالتر", "زیربغل دمبل تک خم", "اسکات پا هالتر", "نشر جانب دمبل", "پشت بازو سیم‌کش").
+   - "notes" must contain precise anatomical and tempo coaching cues in Persian.
+   - BAN GENERIC TEMPLATES: Every exercise, set count, and weight must directly reflect this athlete's bodyweight (${weightKg}kg), weak points (${rankedMuscles}), and injury limitations.
 
 ### TARGET JSON SCHEMA:
 {
   "schema_version": "1.0",
   "program": {
     "id": "program-${Date.now()}",
-    "name": "Custom Program Name for ${profile.name || 'Trainee'}",
-    "description": "Scientific overview and rationale tailored specifically for ${profile.name || 'this trainee'}",
+    "name": "برنامه تخصصی هایپرتروفی ${profile.name || 'ورزشکار'}",
+    "name_fa": "برنامه تخصصی هایپرتروفی ${profile.name || 'ورزشکار'}",
+    "description": "برنامه کاملاً اختصاصی و طراحی‌شده بر اساس مشخصات بیومتریک و اهداف ${profile.name || 'ورزشکار'}",
     "goal": ["${profile.primaryGoal}"${profile.secondaryGoal ? `, "${profile.secondaryGoal}"` : ''}],
     "duration_weeks": 8,
     "days_per_week": ${profile.daysPerWeek},
     "personalization_audit": {
       "trainee_name": "${profile.name || 'Athlete'}",
-      "primary_goal_alignment": "Scientific explanation of how this split maximizes ${profile.primaryGoal}",
-      "priority_muscle_protocol": "How ${rankedMuscles} receive prime placement and dedicated weekly volume",
-      "injury_safeguards_applied": "How reported injuries (${profile.injuryLocations.join(', ') || 'none'}) are safeguarded",
-      "calculated_loads_summary": "Explanation of calculated target weights based on ${weightKg}kg bodyweight"
+      "primary_goal_alignment": "توضیح علمی انطباق اسپلیت با هدف ${profile.primaryGoal}",
+      "priority_muscle_protocol": "نحوه اولویت‌دهی به عضلات ضعیف (${rankedMuscles}) و قرارگیری در ابتدای جلسات",
+      "injury_safeguards_applied": "اقدامات پیشگیرانه بیومکانیکی برای آسیب‌های گزارش‌شده (${profile.injuryLocations.join('، ') || 'بدون آسیب'})",
+      "calculated_loads_summary": "محاسبه دقیق وزنه‌های کاری بر اساس وزن بدن ${weightKg} کیلوگرم و سطح تجربه"
     }
   },
   "user_context": {
@@ -374,13 +406,15 @@ ${lang === 'fa' ? `9. CRITICAL PERSIAN LANGUAGE REQUIREMENT:
   "days": [
     {
       "day_id": "day_1",
-      "name": "e.g. Upper Body Focus A (تمرکز سینه و عضلات اولویت‌دار)",
-      "weekday": "${preferredDaysList[0] || 'Saturday'}",
-      "focus": ["Chest", "Back", "Shoulders"],
+      "name": "روز اول: پوش A (تمرکز سینه و عضلات اولویت‌دار)",
+      "name_fa": "روز اول: پوش A (تمرکز سینه و سرشانه)",
+      "weekday": "${preferredDaysList[0] || 'شنبه'}",
+      "focus": ["Chest", "Shoulders", "Triceps"],
       "exercises": [
         {
           "exercise_id": "ex_1_1",
           "name": "پرس سینه هالتر (Barbell Bench Press)",
+          "name_fa": "پرس سینه هالتر",
           "muscle_group": "Chest",
           "secondary_muscles": ["Triceps", "Shoulders"],
           "order": 1,
@@ -392,7 +426,7 @@ ${lang === 'fa' ? `9. CRITICAL PERSIAN LANGUAGE REQUIREMENT:
           "rest_seconds": 150,
           "tempo": "3-0-1-0",
           "equipment": "Barbell",
-          "notes": "قوس ایمن کمر و حفظ سفتی کتف‌ها. کنترل ۳ ثانیه‌ای فاز منفی برای بیشترین تنش مکانیکی.",
+          "notes": "قوس ایمن کمر و ثبات کتف‌ها. کنترل ۳ ثانیه‌ای فاز منفی برای اعمال حداکثر تنش مکانیکی.",
           "superset_group": null,
           "warmup": { "sets": 2, "reps": 8, "target_weight": ${Math.round(estimatedBenchWorkingKg * 0.5)} }
         }

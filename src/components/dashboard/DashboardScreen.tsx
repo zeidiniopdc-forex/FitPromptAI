@@ -153,12 +153,16 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                 {/* Today Pin Indicator */}
                 {isToday && (
                   <span className="absolute -top-2 left-1/2 -translate-x-1/2 px-1.5 py-0.2 rounded-full text-[9px] font-black bg-emerald-500 text-zinc-950 uppercase tracking-tighter shadow">
-                    {lang === 'fa' ? 'امروز' : 'Today'}
+                    امروز
                   </span>
                 )}
 
-                <span className="text-[11px] font-bold block pt-1">
-                  {lang === 'fa' ? slot.dayInfo.nameFa.slice(0, 3) : slot.dayInfo.nameEn.slice(0, 3)}
+                <span className="text-[10px] sm:text-xs font-bold block pt-1">
+                  {slot.dayInfo.nameFa}
+                </span>
+
+                <span className="text-[9px] text-zinc-400">
+                  روز {slot.dayInfo.dayNumber}
                 </span>
 
                 <div className="mt-1">
@@ -175,8 +179,8 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
 
                 <span className="text-[9px] font-medium truncate w-full mt-1 px-0.5 opacity-90">
                   {hasWorkout
-                    ? (lang === 'fa' && slot.assignedWorkout?.name_fa ? slot.assignedWorkout.name_fa.split(' ')[0] : slot.assignedWorkout?.name.split(' ')[0])
-                    : (lang === 'fa' ? 'استراحت' : 'Rest')}
+                    ? (slot.assignedWorkout?.name_fa || slot.assignedWorkout?.name)
+                    : 'استراحت'}
                 </span>
               </button>
             );
@@ -194,31 +198,31 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
             <div className="flex items-center gap-2 flex-wrap">
               <span className="px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider bg-emerald-500 text-zinc-950 shadow-md flex items-center gap-1">
                 <Calendar className="w-3 h-3 inline-block" />
-                <span>{lang === 'fa' ? currentDayInfo.nameFa : currentDayInfo.nameEn}</span>
+                <span>{currentDayInfo.nameFa} (روز {currentDayInfo.dayNumber} هفته)</span>
                 <span className="opacity-75 font-normal">
-                  • {isViewingDifferentDay ? (lang === 'fa' ? 'جلسه انتخابی' : 'Selected Session') : labels.todayWorkoutTitle}
+                  • {isViewingDifferentDay ? 'جلسه انتخابی' : 'جلسه امروز'}
                 </span>
               </span>
 
               {isExplicitMatch && !isViewingDifferentDay && (
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-500/20 text-teal-300 border border-teal-500/30">
-                  {lang === 'fa' ? 'جلسه اختصاصی امروز' : 'Scheduled Today'}
+                  جلسه اختصاصی امروز در تقویم ایران
                 </span>
               )}
 
               {isViewingDifferentDay && (
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                  {lang === 'fa' ? 'پیش‌نمایش جلسه دیگر' : 'Viewing Another Day'}
+                  پیش‌نمایش جلسه دیگر
                 </span>
               )}
 
               {activeSession ? (
                 <span className="text-xs font-bold text-amber-400 flex items-center gap-1 animate-pulse">
-                  ● {lang === 'fa' ? 'جلسه در حال اجرا' : 'In Progress'}
+                  ● تمرین زنده در حال اجرا
                 </span>
               ) : (
                 <span className="text-xs text-zinc-400">
-                  {lang === 'fa' && activeProgram?.program.name_fa ? activeProgram.program.name_fa : (activeProgram?.program.name || 'FitPrompt Standard')}
+                  {activeProgram?.program.name_fa || activeProgram?.program.name || 'برنامه پیش‌فرض فیت‌پارسی'}
                 </span>
               )}
             </div>
@@ -226,17 +230,17 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
             {displayedDay ? (
               <>
                 <h3 className="text-xl sm:text-2xl font-black text-white">
-                  {getDayName(displayedDay.name, lang, displayedDay.name_fa)}
+                  {displayedDay.name_fa || displayedDay.name}
                 </h3>
                 <p className="text-xs sm:text-sm text-emerald-400 font-medium">
-                  {displayedDay.focus?.map((f) => getMuscleGroupName(f, lang)).join(' • ') || (lang === 'fa' ? 'تمرکز هایپرتروفی' : 'Hypertrophy Focus')}
+                  {displayedDay.focus?.map((f) => getMuscleGroupName(f, 'fa')).join(' • ') || 'تمرکز هایپرتروفی'}
                 </p>
                 <div className="flex items-center gap-4 text-xs text-zinc-400 pt-1">
-                  <span>{displayedDay.exercises.length} {labels.exerciseCount}</span>
+                  <span>{displayedDay.exercises.length} حرکت تمرینی</span>
                   <span>•</span>
-                  <span>~{profile.sessionDurationMinutes || 60} {lang === 'fa' ? 'دقیقه' : 'min'}</span>
+                  <span>~{profile.sessionDurationMinutes || 60} دقیقه</span>
                   <span>•</span>
-                  <span>{displayedDay.exercises.reduce((a, b) => a + b.sets, 0)} {labels.totalSets}</span>
+                  <span>{displayedDay.exercises.reduce((a, b) => a + b.sets, 0)} ست کاری کل</span>
                 </div>
               </>
             ) : (
@@ -244,19 +248,17 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                 <div className="flex items-center gap-2 text-emerald-400">
                   <Moon className="w-5 h-5" />
                   <h3 className="text-lg sm:text-xl font-bold text-white">
-                    {labels.restDayTitle}
+                    امروز روز استراحت است
                   </h3>
                 </div>
                 <p className="text-xs text-zinc-400 max-w-md">
-                  {lang === 'fa' 
-                    ? 'امروز در برنامه شما روز استراحت و بازسازی عضلانی است. عضلات در فاز ریکاوری رشد می‌کنند.'
-                    : labels.restDaySubtitle}
+                  امروز در برنامه شما روز استراحت و بازسازی عضلانی است. ریکاوری و تغذیه مناسب برای رشد بهینه عضلات ضروری است.
                 </p>
                 {nextDay && (
                   <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-zinc-800/80 border border-zinc-700/60 text-xs text-zinc-300">
-                    <span className="text-emerald-400 font-bold">{lang === 'fa' ? 'جلسه بعدی:' : 'Next Session:'}</span>
-                    <span>{getDayName(nextDay.name, lang, nextDay.name_fa)}</span>
-                    {nextDayInfo && <span className="text-zinc-500">({lang === 'fa' ? nextDayInfo.nameFa : nextDayInfo.nameEn})</span>}
+                    <span className="text-emerald-400 font-bold">جلسه بعدی:</span>
+                    <span>{nextDay.name_fa || nextDay.name}</span>
+                    {nextDayInfo && <span className="text-zinc-400">({nextDayInfo.nameFa} - روز {nextDayInfo.dayNumber})</span>}
                   </div>
                 )}
               </div>
@@ -274,10 +276,10 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                 <Play className="w-5 h-5 fill-current" />
                 <span>
                   {activeSession 
-                    ? (lang === 'fa' ? 'ادامه تمرین زنده' : 'Resume Workout') 
+                    ? 'ادامه تمرین زنده' 
                     : isViewingDifferentDay
-                    ? (lang === 'fa' ? 'شروع این جلسه' : 'Start This Workout')
-                    : labels.startWorkout}
+                    ? 'شروع این جلسه'
+                    : 'شروع تمرین امروز'}
                 </span>
               </button>
             ) : nextDay ? (
@@ -287,7 +289,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                 className="px-6 py-3 rounded-2xl bg-zinc-800 hover:bg-zinc-700 border border-emerald-500/30 text-emerald-300 font-bold text-xs shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2"
               >
                 <Play className="w-4 h-4 fill-current" />
-                <span>{lang === 'fa' ? 'شروع جلسه بعدی پیش از موعد' : 'Start Next Session Early'}</span>
+                <span>شروع جلسه بعدی پیش از موعد</span>
               </button>
             ) : null}
           </div>

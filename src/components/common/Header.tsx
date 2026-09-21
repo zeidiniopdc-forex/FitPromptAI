@@ -26,11 +26,6 @@ export const Header: React.FC<HeaderProps> = ({ onOpenAndroidCode, onOpenImport 
   const isLight = settings.theme === 'light';
   const [notificationToast, setNotificationToast] = useState<string | null>(null);
 
-  const toggleLanguage = () => {
-    const nextLang = settings.language === 'fa' ? 'en' : 'fa';
-    updateSettings({ language: nextLang });
-  };
-
   const toggleTheme = () => {
     const nextTheme = settings.theme === 'light' ? 'dark' : 'light';
     updateSettings({ theme: nextTheme });
@@ -41,9 +36,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenAndroidCode, onOpenImport 
   };
 
   const simulateNotification = () => {
-    const message = lang === 'fa' 
-      ? '🔔 یادآور تمرین: زمان اجرای برنامه امروز فرا رسیده است!' 
-      : '🔔 Workout Reminder: Time for today\'s scheduled training!';
+    const message = '🔔 یادآور تمرین: زمان اجرای برنامه امروز فرا رسیده است!';
     setNotificationToast(message);
     setTimeout(() => setNotificationToast(null), 3500);
   };
@@ -54,7 +47,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenAndroidCode, onOpenImport 
         {/* Left / Start: Synchronized App Icon and App Name */}
         <div className="flex items-center gap-2.5">
           <div className="w-9 h-9 rounded-xl overflow-hidden shadow-lg shadow-emerald-500/20 shrink-0 border border-emerald-500/30">
-            <img src="/icon.svg" alt="FitPrompt AI" className="w-full h-full object-cover" />
+            <img src="/icon.svg" alt="فیت‌پارسی هوشمند" className="w-full h-full object-cover" />
           </div>
           <div>
             <div className="flex items-center gap-1.5">
@@ -64,7 +57,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenAndroidCode, onOpenImport 
               {activeSession && (
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 animate-pulse">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                  {lang === 'fa' ? 'تمرین زنده' : 'Active'}
+                  <span>تمرین زنده</span>
                 </span>
               )}
             </div>
@@ -80,7 +73,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenAndroidCode, onOpenImport 
           <button
             id="btn-header-theme"
             onClick={toggleTheme}
-            title={isLight ? (lang === 'fa' ? 'تغییر به تم تاریک' : 'Switch to Dark Mode') : (lang === 'fa' ? 'تغییر به تم روشن' : 'Switch to Light Mode')}
+            title={isLight ? 'تغییر به تم تاریک' : 'تغییر به تم روشن'}
             className="p-2 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
           >
             {isLight ? (
@@ -94,7 +87,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenAndroidCode, onOpenImport 
           <button
             id="btn-header-notification"
             onClick={simulateNotification}
-            title={lang === 'fa' ? 'تست نوتیفیکیشن یادآوری تمرین' : 'Test Reminder Notification'}
+            title="تست اعلان یادآوری تمرین"
             className="p-2 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors relative"
           >
             <Bell className="w-4 h-4" />
@@ -105,7 +98,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenAndroidCode, onOpenImport 
           <button
             id="btn-header-sound"
             onClick={toggleSound}
-            title={settings.soundEnabled ? 'Disable Sound' : 'Enable Sound'}
+            title={settings.soundEnabled ? 'غیرفعال‌سازی صدا' : 'فعال‌سازی صدا'}
             className="p-2 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
           >
             {settings.soundEnabled ? (
@@ -115,26 +108,16 @@ export const Header: React.FC<HeaderProps> = ({ onOpenAndroidCode, onOpenImport 
             )}
           </button>
 
-          {/* Language Switcher */}
-          <button
-            id="btn-header-language"
-            onClick={toggleLanguage}
-            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-zinc-900 border border-zinc-700/60 hover:bg-zinc-800 text-zinc-200 transition-colors"
-          >
-            <Globe className="w-3.5 h-3.5 text-zinc-400" />
-            <span>{settings.language === 'fa' ? 'English' : 'فارسی'}</span>
-          </button>
-
           {/* Android Native Architecture Code Viewer */}
           {onOpenAndroidCode && (
             <button
               id="btn-header-android-code"
               onClick={onOpenAndroidCode}
-              title={lang === 'fa' ? 'معماری و کدهای Android Jetpack Compose' : 'Android Compose Clean Architecture'}
+              title="معماری و کدهای اندروید نیتیو (Android Jetpack Compose)"
               className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 transition-colors"
             >
               <Code2 className="w-3.5 h-3.5" />
-              <span className="hidden md:inline">Android Native</span>
+              <span className="hidden md:inline">کد نیتیو اندروید</span>
             </button>
           )}
         </div>

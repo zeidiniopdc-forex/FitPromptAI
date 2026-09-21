@@ -10,6 +10,7 @@ export type WeekdayId =
 export interface DayOfWeekInfo {
   id: WeekdayId;
   index: number; // 0 for Saturday, 6 for Friday in Iranian/Solar calendar
+  dayNumber: number; // 1 (شنبه) to 7 (جمعه)
   jsDay: number; // 0 for Sunday in JS getDay()
   nameFa: string;
   nameEn: string;
@@ -18,48 +19,70 @@ export interface DayOfWeekInfo {
 }
 
 export const WEEKDAYS_PERSIAN_ORDER: DayOfWeekInfo[] = [
-  { id: 'saturday', index: 0, jsDay: 6, nameFa: 'شنبه', nameEn: 'Saturday', shortFa: 'ش', shortEn: 'Sat' },
-  { id: 'sunday', index: 1, jsDay: 0, nameFa: 'یک‌شنبه', nameEn: 'Sunday', shortFa: 'ی', shortEn: 'Sun' },
-  { id: 'monday', index: 2, jsDay: 1, nameFa: 'دوشنبه', nameEn: 'Monday', shortFa: 'د', shortEn: 'Mon' },
-  { id: 'tuesday', index: 3, jsDay: 2, nameFa: 'سه‌شنبه', nameEn: 'Tuesday', shortFa: 'س', shortEn: 'Tue' },
-  { id: 'wednesday', index: 4, jsDay: 3, nameFa: 'چهارشنبه', nameEn: 'Wednesday', shortFa: 'چ', shortEn: 'Wed' },
-  { id: 'thursday', index: 5, jsDay: 4, nameFa: 'پنج‌شنبه', nameEn: 'Thursday', shortFa: 'پ', shortEn: 'Thu' },
-  { id: 'friday', index: 6, jsDay: 5, nameFa: 'جمعه', nameEn: 'Friday', shortFa: 'ج', shortEn: 'Fri' },
+  { id: 'saturday', index: 0, dayNumber: 1, jsDay: 6, nameFa: 'شنبه', nameEn: 'Saturday', shortFa: 'ش', shortEn: 'Sat' },
+  { id: 'sunday', index: 1, dayNumber: 2, jsDay: 0, nameFa: 'یک‌شنبه', nameEn: 'Sunday', shortFa: 'ی', shortEn: 'Sun' },
+  { id: 'monday', index: 2, dayNumber: 3, jsDay: 1, nameFa: 'دوشنبه', nameEn: 'Monday', shortFa: 'د', shortEn: 'Mon' },
+  { id: 'tuesday', index: 3, dayNumber: 4, jsDay: 2, nameFa: 'سه‌شنبه', nameEn: 'Tuesday', shortFa: 'س', shortEn: 'Tue' },
+  { id: 'wednesday', index: 4, dayNumber: 5, jsDay: 3, nameFa: 'چهارشنبه', nameEn: 'Wednesday', shortFa: 'چ', shortEn: 'Wed' },
+  { id: 'thursday', index: 5, dayNumber: 6, jsDay: 4, nameFa: 'پنج‌شنبه', nameEn: 'Thursday', shortFa: 'پ', shortEn: 'Thu' },
+  { id: 'friday', index: 6, dayNumber: 7, jsDay: 5, nameFa: 'جمعه', nameEn: 'Friday', shortFa: 'ج', shortEn: 'Fri' },
 ];
 
 /**
- * Normalizes day strings in Persian, English, or abbreviations to standard WeekdayId
+ * Normalizes day strings in Persian, English, day numbers, or session indices to standard WeekdayId
+ * Strictly follows Iranian calendar:
+ * Day 1 / اول هفته = شنبه (Saturday)
+ * Day 2 = یک‌شنبه (Sunday)
+ * Day 3 = دوشنبه (Monday)
+ * Day 4 = سه‌شنبه (Tuesday)
+ * Day 5 = چهارشنبه (Wednesday)
+ * Day 6 = پنج‌شنبه (Thursday)
+ * Day 7 = جمعه (Friday)
  */
 export function normalizeDayString(raw?: string): WeekdayId | null {
   if (!raw) return null;
-  const clean = raw.toLowerCase().trim().replace(/[\u200c\s-]+/g, '');
+  const clean = raw.toLowerCase().trim().replace(/[\u200c\s-_]+/g, '');
 
-  if (clean.includes('sat') || clean.includes('شنبه') && !clean.includes('یک') && !clean.includes('دو') && !clean.includes('سه') && !clean.includes('چهار') && !clean.includes('پنج')) {
-    return 'saturday';
-  }
-  if (clean.includes('sun') || clean.includes('یکشنبه')) {
-    return 'sunday';
-  }
-  if (clean.includes('mon') || clean.includes('دوشنبه')) {
-    return 'monday';
-  }
-  if (clean.includes('tue') || clean.includes('سهشنبه')) {
-    return 'tuesday';
-  }
-  if (clean.includes('wed') || clean.includes('چهارشنبه')) {
-    return 'wednesday';
-  }
-  if (clean.includes('thu') || clean.includes('پنجشنبه')) {
-    return 'thursday';
-  }
-  if (clean.includes('fri') || clean.includes('جمعه')) {
+  // Specific Day 7 / Friday / جمعه
+  if (clean.includes('جمعه') || clean.includes('fri') || clean.includes('آدینه') || clean.includes('روزهفتم') || clean.includes('روز7') || clean.includes('روز۷') || clean.includes('جلسههفتم') || clean.includes('جلسه7') || clean.includes('جلسه۷') || clean.includes('day7')) {
     return 'friday';
   }
+
+  // Specific Day 6 / Thursday / پنج‌شنبه
+  if (clean.includes('پنجشنبه') || clean.includes('پنج') || clean.includes('thu') || clean.includes('روزششم') || clean.includes('روز6') || clean.includes('روز۶') || clean.includes('جلسهششم') || clean.includes('جلسه6') || clean.includes('جلسه۶') || clean.includes('day6') || clean.includes('legs_b') || clean.includes('legsb')) {
+    return 'thursday';
+  }
+
+  // Specific Day 5 / Wednesday / چهارشنبه
+  if (clean.includes('چهارشنبه') || clean.includes('چهار') || clean.includes('wed') || clean.includes('روزپنجم') || clean.includes('روز5') || clean.includes('روز۵') || clean.includes('جلسهپنجم') || clean.includes('جلسه5') || clean.includes('جلسه۵') || clean.includes('day5') || clean.includes('pull_b') || clean.includes('pullb')) {
+    return 'wednesday';
+  }
+
+  // Specific Day 4 / Tuesday / سه‌شنبه
+  if (clean.includes('سهشنبه') || (clean.includes('سه') && !clean.includes('شنبه')) || clean.includes('tue') || clean.includes('روزچهارم') || clean.includes('روز4') || clean.includes('روز۴') || clean.includes('جلسهچهارم') || clean.includes('جلسه4') || clean.includes('جلسه۴') || clean.includes('day4') || clean.includes('push_b') || clean.includes('pushb')) {
+    return 'tuesday';
+  }
+
+  // Specific Day 3 / Monday / دوشنبه
+  if (clean.includes('دوشنبه') || clean.includes('mon') || clean.includes('روزسوم') || clean.includes('روز3') || clean.includes('روز۳') || clean.includes('جلسهسوم') || clean.includes('جلسه3') || clean.includes('جلسه۳') || clean.includes('day3') || clean.includes('legs_a') || clean.includes('legsa')) {
+    return 'monday';
+  }
+
+  // Specific Day 2 / Sunday / یک‌شنبه
+  if (clean.includes('یکشنبه') || clean.includes('sun') || clean.includes('روزدوم') || clean.includes('روز2') || clean.includes('روز۲') || clean.includes('جلسهدوم') || clean.includes('جلسه2') || clean.includes('جلسه۲') || clean.includes('day2') || clean.includes('pull_a') || clean.includes('pulla')) {
+    return 'sunday';
+  }
+
+  // Specific Day 1 / Saturday / شنبه
+  if (clean.includes('sat') || clean.includes('شنبه') || clean.includes('روزاول') || clean.includes('روز1') || clean.includes('روز۱') || clean.includes('جلسهاول') || clean.includes('جلسه1') || clean.includes('جلسه۱') || clean.includes('day1') || clean.includes('push_a') || clean.includes('pusha')) {
+    return 'saturday';
+  }
+
   return null;
 }
 
 /**
- * Returns current day of week info based on current time
+ * Returns current day of week info based on current time in Iranian calendar
  */
 export function getCurrentDayOfWeek(date: Date = new Date()): DayOfWeekInfo {
   const jsDay = date.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
@@ -85,11 +108,17 @@ export interface WorkoutDayMatchResult<T> {
 }
 
 /**
- * Matches a program day with current day of week with strict scientific adherence:
- * - Detects explicit day matches (Persian & English)
- * - Adheres to trainee's preferred training days (e.g. Saturday, Monday, Wednesday, Thursday)
- * - Accurately identifies Rest Days instead of assigning wrong workouts
- * - Generates full 7-day schedule status
+ * Matches a program day with current day of week with strict Iranian calendar adherence:
+ * - Week starts strictly on Saturday (شنبه = روز ۱)
+ * - Monday is Day 3 (دوشنبه = روز ۳)
+ * - In a 6-day program:
+ *    Day 1 = شنبه
+ *    Day 2 = یک‌شنبه
+ *    Day 3 = دوشنبه (امروز!)
+ *    Day 4 = سه‌شنبه
+ *    Day 5 = چهارشنبه (پول B)
+ *    Day 6 = پنج‌شنبه
+ *    جمعه = استراحت و ریکاوری
  */
 export function matchWorkoutDayForDate<T extends { 
   day_id: string; 
@@ -115,44 +144,70 @@ export function matchWorkoutDayForDate<T extends {
     };
   }
 
-  // Build a mapped 7-day schedule
-  // Strategy:
-  // 1. Direct program weekday matches take priority
-  // 2. PreferredDays mapping maps unassigned program days to user's preferred days
   const scheduleMap = new Map<WeekdayId, T>();
 
-  // Check which days have explicit weekday tags
-  days.forEach((day) => {
-    const norm = normalizeDayString(day.weekday);
-    if (norm && !scheduleMap.has(norm)) {
-      scheduleMap.set(norm, day);
-    }
-  });
+  // Special handling for 6-day programs:
+  // In Iranian training culture, 6-day programs run Saturday through Thursday, with Friday as Rest.
+  if (days.length === 6) {
+    const iranian6DayWeekdays: WeekdayId[] = [
+      'saturday',  // شنبه - روز اول
+      'sunday',    // یک‌شنبه - روز دوم
+      'monday',    // دوشنبه - روز سوم (امروز!)
+      'tuesday',   // سه‌شنبه - روز چهارم
+      'wednesday', // چهارشنبه - روز پنجم (پول B)
+      'thursday'   // پنج‌شنبه - روز ششم
+    ];
 
-  // If some or all days don't have explicit weekdays, or trainee has custom preferredDays:
-  const normalizedPreferredDays: WeekdayId[] = (preferredDays || [])
-    .map((pd) => normalizeDayString(pd))
-    .filter((id): id is WeekdayId => id !== null);
+    // Check if days already have explicit weekday assignments
+    days.forEach((day, idx) => {
+      const explicitNorm = normalizeDayString(day.weekday) || normalizeDayString(day.day_id) || normalizeDayString(day.name);
+      if (explicitNorm) {
+        scheduleMap.set(explicitNorm, day);
+      } else if (idx < iranian6DayWeekdays.length) {
+        // Map sequential day to Iranian weekday
+        scheduleMap.set(iranian6DayWeekdays[idx], day);
+      }
+    });
 
-  if (normalizedPreferredDays.length > 0) {
-    // Map program days sequentially to user's preferred days if not already explicitly mapped
-    normalizedPreferredDays.forEach((weekdayId, idx) => {
+    // Fill any missing days among the 6 working days
+    iranian6DayWeekdays.forEach((weekdayId, idx) => {
       if (!scheduleMap.has(weekdayId) && days[idx]) {
         scheduleMap.set(weekdayId, days[idx]);
       }
     });
-  }
-
-  // If still empty (e.g. program has no weekdays and preferredDays is empty), assign by order starting Saturday
-  if (scheduleMap.size === 0) {
-    days.forEach((day, idx) => {
-      if (idx < WEEKDAYS_PERSIAN_ORDER.length) {
-        scheduleMap.set(WEEKDAYS_PERSIAN_ORDER[idx].id, day);
+  } else {
+    // 1. Direct explicit day matches (Persian names, weekday tags, or day IDs)
+    days.forEach((day) => {
+      const norm = normalizeDayString(day.weekday) || normalizeDayString(day.day_id) || normalizeDayString(day.name);
+      if (norm && !scheduleMap.has(norm)) {
+        scheduleMap.set(norm, day);
       }
     });
+
+    // 2. User's preferred days (normalized to Iranian weekdays)
+    const normalizedPreferredDays: WeekdayId[] = (preferredDays || [])
+      .map((pd) => normalizeDayString(pd))
+      .filter((id): id is WeekdayId => id !== null);
+
+    if (normalizedPreferredDays.length > 0) {
+      normalizedPreferredDays.forEach((weekdayId, idx) => {
+        if (!scheduleMap.has(weekdayId) && days[idx]) {
+          scheduleMap.set(weekdayId, days[idx]);
+        }
+      });
+    }
+
+    // 3. Sequential fallback starting Saturday (شنبه)
+    if (scheduleMap.size === 0) {
+      days.forEach((day, idx) => {
+        if (idx < WEEKDAYS_PERSIAN_ORDER.length) {
+          scheduleMap.set(WEEKDAYS_PERSIAN_ORDER[idx].id, day);
+        }
+      });
+    }
   }
 
-  // Construct complete 7-day schedule
+  // Construct complete 7-day schedule (Saturday to Friday)
   const weekSchedule: DayScheduleStatus<T>[] = WEEKDAYS_PERSIAN_ORDER.map((dayInfo) => {
     const assigned = scheduleMap.get(dayInfo.id) || null;
     return {
